@@ -1,0 +1,73 @@
+name: Tests
+
+on:
+  push:
+  workflow_dispatch:
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+defaults:
+  run:
+    shell: bash
+env:
+  SDK_SUB_KEY: ${{ secrets.SDK_SUB_KEY }}
+  SDK_PUB_KEY: ${{ secrets.SDK_PUB_KEY }}
+  SDK_PAM_SUB_KEY: ${{ secrets.SDK_PAM_SUB_KEY }}
+  SDK_PAM_PUB_KEY: ${{ secrets.SDK_PAM_PUB_KEY }}
+  SDK_PAM_SEC_KEY: ${{ secrets.SDK_PAM_SEC_KEY }}
+
+jobs:
+  tests:
+    name: Unit tests
+    runs-on:
+      group: organization/Default
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+      - name: Run unit tests
+        run: |
+          cargo test --features="full"
+      - name: Run doc tests
+        run: |
+          cargo test --doc
+  #      - name: Cancel workflow runs for commit on error
+  #        if: failure()
+  #        uses: ./.github/.release/actions/actions/utils/fast-jobs-failure
+  acceptance-tests:
+    name: Acceptance tests
+    runs-on:
+      group: organization/Default
+    steps:
+      - name: Checkout project
+        uses: actions/checkout@v5
+      - name: Checkout mock-server action
+        uses: actions/checkout@v5
+        with:
+          repository: pubnub/client-engineering-deployment-tools
+          ref: v1
+          token: ${{ secrets.GH_TOKEN }}
+          path: .github/.release/actions
+      - name: Run mock server action
+        uses: ./.github/.release/actions/actions/mock-server
+        with:
+          token: ${{ secrets.GH_TOKEN }}
+          features-path: tests/features
+      - name: Run acceptance tests
+        env:
+          RUST_LOG: debug
+        run: |
+          cargo test --features contract_test --test contract_test
+      - name: Expose acceptance tests reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: acceptance-test-reports
+          path: tests/reports/*.xml
+          retention-days: 7
+  all-tests:
+    name: Tests
+    runs-on:
+      group: organization/Default
+    needs: [ tests, acceptance-tests ]
+    steps:
+      - name: Tests summary
+        run: echo -e "\033[38;2;95;215;0m\033[1mAll tests successfully passed"

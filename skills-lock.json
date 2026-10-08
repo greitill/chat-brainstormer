@@ -1,0 +1,137 @@
+{
+  "version": 1,
+  "skills": {
+    "pubnub-app-context": {
+      "source": "pubnub/skills",
+      "sourceType": "github",
+      "skillPath": "pubnub-app-context/SKILL.md",
+      "computedHash": "b987388a4fbb8f486ba85976c7e68195d1e7fe144a5635052784bd3f20e89f73"
+    },
+    "pubnub-app-developer": {
+      "source": "pubnub/skills",
+      "sourceType": "github",
+      "skillPath": "pubnub-app-developer/SKILL.md",
+      "computedHash": "2d628f52a8e0fc618c0a50d08df566b753da5d02b8296dcb37a750adacac4758"
+    },
+    "pubnub-chat": {
+      "source": "pubnub/skills",
+      "sourceType": "github",
+      "skillPath": "pubnub-chat/SKILL.md",
+      "computedHash": "b4f330e7636f41a5159c05bb45cbed48e104223d609374ab33d1199ca46f5daa"
+    },
+    "pubnub-choose-docs-path": {
+      "source": "pubnub/skills",
+      "sourceType": "github",
+      "skillPath": "pubnub-choose-docs-path/SKILL.md",
+      "computedHash": "a7f184238cab77a56a8f63e60a7efd618c838a4c33ab5798ca234dae8be7b684"
+    },
+    "pubnub-events-and-actions": {
+      "source": "pubnub/skills",
+      "sourceType": "github",
+      "skillPath": "pubnub-events-and-actions/SKILL.md",
+      "computedHash": "23c01b921f49315244444515c7d28c06f6c3f6acabba517d47cda1cf008dc2a5"
+    },
+    "pubnub-functions": {
+      "source": "pubnub/skills",
+      "sourceType": "github",
+      "skillPath": "pubnub-functions/SKILL.md",
+      "computedHash": "ba3f21d9cab2b675b5d140bb677fb860cb73dd4864d1e6b80fb6d27c409422ab"
+    },
+    "pubnub-history": {
+      "source": "pubnub/skills",
+      "sourceType": "github",
+      "skillPath": "pubnub-history/SKILL.md",
+      "computedHash": "8d5a3b11d5cbd3e7ebf95a61f7b92ff580358fe0446d69a39e9824c68e768aa6"
+    },
+    "pubnub-illuminate": {
+      "source": "pubnub/skills",
+      "sourceType": "github",
+      "skillPath": "pubnub-illuminate/SKILL.md",
+      "computedHash": "f79c6486dfc3a9138f22a45c9bd46c70d731b0211d3ecaadb69b2e14d36e5b94"
+    },
+    "pubnub-keyset-management": {
+      "source": "pubnub/skills",
+      "sourceType": "github",
+      "skillPath": "pubnub-keyset-management/SKILL.md",
+      "computedHash": "ad5f70ec72076ac7b9ab716bbe1a5ac9b8795861ed8f1ce48c25e90a8f64694c"
+    },
+    "pubnub-live-auctions": {
+      "source": "pubnub/skills",
+      "sourceType": "github",
+      "skillPath": "pubnub-live-auctions/SKILL.md",
+      "computedHash": "fa27cdba764320360cf365ef55ce471242f3da891dced9471a39a577e10ce061"
+    },
+    "pubnub-live-betting-casino": {
+      "source": "pubnub/skills",
+      "sourceType": "github",
+      "skillPath": "pubnub-live-betting-casino/SKILL.md",
+      "computedHash": "2baf3b788f1eef8ab560e08548968dffdd2971b7fcf58865440f2e98eae51957"
+    },
+    "pubnub-live-sport-updates": {
+      "source": "pubnub/skills",
+      "sourceType": "github",
+      "skillPath": "pubnub-live-sport-updates/SKILL.md",
+      "computedHash": "d9875bc5ed5e9aa48cd8f0519f26783972f22c5cb9ea5db49c77450a6f27857a"
+    },
+    "pubnub-live-stock-quote-updates": {
+      "source": "pubnub/skills",
+      "sourceType": "github",
+      "skillPath": "pubnub-live-stock-quote-updates/SKILL.md",
+      "computedHash": "aa1ec71a8fc8412c6db8d41cccc52dcc001def55098b3ea1dd9e7e8087b3a71b"
+    },
+    "pubnub-live-voting": {
+      "source": "pubnub/skills",
+      "sourceType": "github",
+      "skillPath": "pubnub-live-voting/SKILL.md",
+      "computedHash": "ea284f367729fad2cceea52c27ea99c8c2c9c7acc12cd7abd51879f2c8ea6083"
+    },
+    "pubnub-multiplayer-gaming": {
+      "source": "pubnub/skills",
+      "sourceType": "github",
+      "skillPath": "pubnub-multiplayer-gaming/SKILL.md",
+      "computedHash": "476ffa385e1af1c23c0d19542af81d0f0784c81beb70204637cd2f1269633382"
+    },
+    "pubnub-observability": {
+      "source": "pubnub/skills",
+      "sourceType": "github",
+      "skillPath": "pubnub-observability/SKILL.md",
+      "computedHash": "eb8b1d6e4ff7bed748c8bda5c4afb84f324008ee2e5aa91dba03aed1d463d2a6"
+    },
+    "pubnub-order-delivery-driver": {
+      "source": "pubnub/skills",
+      "sourceType": "github",
+      "skillPath": "pubnub-order-delivery-driver/SKILL.md",
+      "computedHash": "7fcbc7cd9febedd4809738c518561a9fa03c1077663a75689cb645b0ba185da4"
+    },
+    "pubnub-presence": {
+      "source": "pubnub/skills",
+      "sourceType": "github",
+      "skillPath": "pubnub-presence/SKILL.md",
+      "computedHash": "5b78ed3d52f743d8ab0480bbc2e7b701c8109be68d29c012603042b9fba2b5c6"
+    },
+    "pubnub-reliability": {
+      "source": "pubnub/skills",
+      "sourceType": "github",
+      "skillPath": "pubnub-reliability/SKILL.md",
+      "computedHash": "526e0dadaaa56ba6481745e340310a0970b6057b2295070a00161fc026494ea5"
+    },
+    "pubnub-scale": {
+      "source": "pubnub/skills",
+      "sourceType": "github",
+      "skillPath": "pubnub-scale/SKILL.md",
+      "computedHash": "3206fa5f561ac34408dbdb23b357a66051df1c9c134784386d8e079eef2d1d5c"
+    },
+    "pubnub-security": {
+      "source": "pubnub/skills",
+      "sourceType": "github",
+      "skillPath": "pubnub-security/SKILL.md",
+      "computedHash": "d495fd6f8cf27771ef69197b77c0f8df5dc3b13e239fb7c91e9d0ec21911e15a"
+    },
+    "pubnub-telemedicine": {
+      "source": "pubnub/skills",
+      "sourceType": "github",
+      "skillPath": "pubnub-telemedicine/SKILL.md",
+      "computedHash": "ab02970f9fe7d8006b477664dcbc9065ce157728b4820917d5b476639c382d08"
+    }
+  }
+}

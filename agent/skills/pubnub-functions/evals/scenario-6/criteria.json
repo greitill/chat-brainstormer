@@ -1,0 +1,26 @@
+{
+  "context": "Tests whether the agent correctly implements an On Interval function, which uses a different signature (event) than message handlers (request) and returns event.ok()/event.abort() instead of request.ok()/request.abort().",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Event parameter",
+      "description": "Uses export default async (event) => {} with event parameter, not request or request/response",
+      "max_score": 30
+    },
+    {
+      "name": "Returns event.ok/abort",
+      "description": "Returns event.ok() on success and event.abort() on failure, not request.ok() or response.send()",
+      "max_score": 30
+    },
+    {
+      "name": "Publishes aggregated data",
+      "description": "Uses pubnub.publish() to broadcast the collected/aggregated data to subscribers",
+      "max_score": 25
+    },
+    {
+      "name": "Reads from KVStore",
+      "description": "Retrieves stored data from KVStore for aggregation or reporting",
+      "max_score": 15
+    }
+  ]
+}

@@ -1,0 +1,111 @@
+{
+  "package_name": "pubnub-functions",
+  "total_capabilities": 15,
+  "capabilities": [
+    {
+      "id": 0,
+      "name": "Default async export",
+      "description": "Uses export default async (request) => {} as the function signature, not module.exports or named exports",
+      "complexity": "basic",
+      "api_elements": ["export default async"]
+    },
+    {
+      "id": 1,
+      "name": "Try-catch wrapping",
+      "description": "Wraps all function logic in try/catch with appropriate ok()/abort() returns in both paths",
+      "complexity": "basic",
+      "api_elements": ["try", "catch", "request.ok()", "request.abort()"]
+    },
+    {
+      "id": 2,
+      "name": "Vault for secrets",
+      "description": "Stores API keys and secrets in vault module instead of hardcoding them in function code",
+      "complexity": "basic",
+      "api_elements": ["require('vault')", "vault.get()"]
+    },
+    {
+      "id": 3,
+      "name": "Async/await over promises",
+      "description": "Uses async/await syntax for all asynchronous operations instead of .then()/.catch() chains",
+      "complexity": "basic",
+      "api_elements": ["async", "await"]
+    },
+    {
+      "id": 4,
+      "name": "Operation limit awareness",
+      "description": "Stays within the 3 combined operations per execution limit (KV + XHR + publish combined)",
+      "complexity": "intermediate",
+      "api_elements": ["kvstore", "xhr", "pubnub.publish", "pubnub.fire"]
+    },
+    {
+      "id": 5,
+      "name": "Publish vs fire vs signal",
+      "description": "Selects the correct PubNub method: publish for subscriber delivery, fire for function-only triggers, signal for lightweight ephemeral data",
+      "complexity": "intermediate",
+      "api_elements": ["pubnub.publish()", "pubnub.fire()", "pubnub.signal()"]
+    },
+    {
+      "id": 6,
+      "name": "HTTP endpoint structure",
+      "description": "Uses (request, response) signature for On Request functions with response.send() for HTTP responses",
+      "complexity": "basic",
+      "api_elements": ["request", "response", "response.send()"]
+    },
+    {
+      "id": 7,
+      "name": "CORS handling",
+      "description": "Implements Access-Control-Allow-Origin headers and OPTIONS preflight handling for HTTP endpoints",
+      "complexity": "intermediate",
+      "api_elements": ["response.headers", "Access-Control-Allow-Origin", "OPTIONS"]
+    },
+    {
+      "id": 8,
+      "name": "KVStore atomic counters",
+      "description": "Uses incrCounter/getCounter for counting operations instead of get+set with manual increment",
+      "complexity": "intermediate",
+      "api_elements": ["db.incrCounter()", "db.getCounter()"]
+    },
+    {
+      "id": 9,
+      "name": "KVStore TTL management",
+      "description": "Sets appropriate TTL values (in minutes) when storing data with db.set() to prevent unbounded storage growth",
+      "complexity": "basic",
+      "api_elements": ["db.set(key, value, ttl)"]
+    },
+    {
+      "id": 10,
+      "name": "Channel wildcard patterns",
+      "description": "Configures channel patterns with wildcard at end only (e.g., chat.*) with maximum two literal segments before wildcard",
+      "complexity": "basic",
+      "api_elements": [".*"]
+    },
+    {
+      "id": 11,
+      "name": "On Interval function structure",
+      "description": "Uses (event) parameter for scheduled functions with event.ok()/event.abort() return values",
+      "complexity": "basic",
+      "api_elements": ["event", "event.ok()", "event.abort()"]
+    },
+    {
+      "id": 12,
+      "name": "Rate limiting pattern",
+      "description": "Implements rate limiting using time-window bucketing with incrCounter for atomic counting and KV-based per-user tracking",
+      "complexity": "advanced",
+      "api_elements": ["incrCounter", "Math.floor", "Date.now()"]
+    },
+    {
+      "id": 13,
+      "name": "Message transformation",
+      "description": "Modifies request.message properties to enrich or transform messages before delivery",
+      "complexity": "intermediate",
+      "api_elements": ["request.message"]
+    },
+    {
+      "id": 14,
+      "name": "XHR webhook integration",
+      "description": "Uses xhr.fetch() with proper method, headers, and JSON body for external API calls",
+      "complexity": "intermediate",
+      "api_elements": ["require('xhr')", "xhr.fetch()"]
+    }
+  ]
+}

@@ -1,0 +1,28 @@
+{
+  ".pubnub.yml": [
+    {
+      "pattern": "^version: (v?(\\d+\\.?){2,}([a-zA-Z0-9-]+(\\.?\\d+)?)?)$",
+      "clearedPrefix": true,
+      "clearedSuffix": false
+    }
+  ],
+  "src/lib.rs": [
+    {
+      "pattern": "^\/\/!\\spubnub\\s=\\s\"((\\d+.?){2,}([a-zA-Z0-9-]+(.?\\d+)?)?)\"$",
+      "clearedPrefix": true,
+      "clearedSuffix": false
+    },
+    {
+      "pattern": "^\/\/!\\spubnub\\s?=\\s?{\\s?version\\s?=\\s?\"((\\d+.?){2,}([a-zA-Z0-9-]+(.?\\d+)?)?)\",",
+      "clearedPrefix": true,
+      "clearedSuffix": false
+    }
+  ],
+  "Cargo.toml": [
+     {
+      "pattern": "^version\\s=\\s\\\"((\\d+\\.?){2,}([a-zA-Z0-9-]+(\\.?\\d+)?)?)\\\"$",
+      "clearedPrefix": true,
+      "clearedSuffix": false
+    }
+  ]
+}

@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Realtime Brainstorm Helper — Probability Amplifier</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <div class="atmosphere" aria-hidden="true"></div>
+
+    <section id="gate" class="gate">
+      <p class="brand">Realtime Brainstorm Helper</p>
+      <p class="version">Probability Amplifier · v2 · Rust + PubNub Core SDK</p>
+      <h1>Multiple rooms. History. Typing. Reads. Reactions. LLM analysis.</h1>
+      <form id="hello-form">
+        <label>
+          Your name
+          <input id="display-name" required placeholder="Alex" autocomplete="nickname" />
+        </label>
+        <label class="color-row">
+          Avatar color
+          <span class="color-row-controls">
+            <span id="avatar-preview" class="avatar" aria-hidden="true">?</span>
+            <input id="avatar-color" type="color" value="#0f7a5f" />
+          </span>
+        </label>
+        <button type="submit">Enter workspace</button>
+      </form>
+    </section>
+
+    <main id="app" class="app hidden">
+      <aside class="rooms">
+        <div class="rooms-head">
+          <p class="brand small">Realtime Brainstorm Helper</p>
+          <button id="create-room" type="button">New room</button>
+        </div>
+        <ul id="room-list"></ul>
+        <p id="you" class="you"></p>
+      </aside>
+
+      <section class="chat">
+        <header class="chat-head">
+          <div>
+            <h2 id="room-title">Select a room</h2>
+            <p id="room-meta" class="meta"></p>
+          </div>
+          <div class="actions">
+            <span id="presence" class="pill">0 online</span>
+            <button id="analyze" type="button" disabled>Analyze</button>
+          </div>
+        </header>
+        <div class="online-panel">
+          <h3>Online</h3>
+          <ul id="online-list" class="online-list">
+            <li class="empty">No one in this room yet</li>
+          </ul>
+        </div>
+        <div id="messages" class="messages"></div>
+        <p id="typing" class="typing"></p>
+        <p id="status" class="status" role="status" aria-live="polite"></p>
+        <form id="composer" class="composer">
+          <input id="message-input" placeholder="Share an idea…" disabled />
+          <button type="submit" disabled>Send</button>
+        </form>
+      </section>
+
+      <aside class="analysis">
+        <h2>LLM analysis</h2>
+        <p class="hint">Uses OpenAI when <code>OPENAI_API_KEY</code> is set; otherwise local heuristics.</p>
+        <div id="analysis-body" class="analysis-body empty">Join a room and run analysis.</div>
+      </aside>
+    </main>
+
+    <script src="/app.js"></script>
+  </body>
+</html>

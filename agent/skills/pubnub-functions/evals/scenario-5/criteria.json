@@ -1,0 +1,26 @@
+{
+  "context": "Tests whether the agent implements rate limiting using the PubNub Functions-specific pattern: time-window bucketing with KVStore atomic counters. Generic approaches like in-memory counters or Redis won't work on this serverless edge platform.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Time-window bucketing",
+      "description": "Constructs a rate limit key that includes a time-window component (e.g., using Math.floor(Date.now() / window)) so counters automatically rotate",
+      "max_score": 35
+    },
+    {
+      "name": "Atomic counter for tracking",
+      "description": "Uses db.incrCounter() for incrementing the request count, not a get+set pattern",
+      "max_score": 30
+    },
+    {
+      "name": "Blocks on limit exceeded",
+      "description": "Returns request.abort() or sets a rate-limited flag when the count exceeds the threshold",
+      "max_score": 20
+    },
+    {
+      "name": "Per-user isolation",
+      "description": "Includes the user identifier in the rate limit key so each user has independent limits",
+      "max_score": 15
+    }
+  ]
+}
