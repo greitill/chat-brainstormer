@@ -1,8 +1,3 @@
-<!-- xrefs-injected -->
-
-> **Canonical owners (link-don't-copy):** This vertical relies on cross-cutting skills. Always link to the canonical owner instead of duplicating. Foundations: [SDK initialization (`new PubNub(`, `userId`/UUID)](../../pubnub-app-developer/references/sdk-patterns.md), [pub/sub basics (`pubnub.publish(`, `pubnub.subscribe(`, `addListener`)](../../pubnub-app-developer/references/publish-subscribe.md), [channel naming](../../pubnub-app-developer/references/channels.md), [message filters](../../pubnub-app-developer/references/message-filters.md), [SDK upgrades](../../pubnub-app-developer/references/sdk-upgrades.md), [REST API](../../pubnub-app-developer/references/rest-api.md). Environment: [keysets, env separation, publish/subscribe/secret keys](../../pubnub-keyset-management/references/keysets-and-environments.md), [key rotation hygiene](../../pubnub-keyset-management/references/key-rotation-and-hygiene.md), [demo keys](../../pubnub-keyset-management/references/demo-keys.md), [custom origin](../../pubnub-keyset-management/references/custom-origin.md). Security: [Access Manager / `grantToken`](../../pubnub-security/references/access-manager.md), [AES-256 / message encryption](../../pubnub-security/references/encryption.md), [IP allowlisting](../../pubnub-security/references/ip-whitelisting.md), [DoS mitigation](../../pubnub-security/references/dos-mitigation.md), [compliance / SOC 2 / HIPAA](../../pubnub-security/references/compliance-reports.md). Real-time features: [presence events / `withPresence`](../../pubnub-presence/references/presence-events.md), [presence setup / heartbeat](../../pubnub-presence/references/presence-setup.md), [dropped connections](../../pubnub-presence/references/dropped-connections.md), [multi-device sync](../../pubnub-presence/references/multi-device-sync.md). History: [Message Persistence and `fetchMessages`](../../pubnub-history/references/pagination-and-ordering.md), [offline catch-up](../../pubnub-history/references/offline-catch-up.md), [retention](../../pubnub-history/references/retention-and-storage.md). App Context: [users / user metadata](../../pubnub-app-context/references/users.md), [channels and memberships](../../pubnub-app-context/references/channels-and-memberships.md), [metadata and filtering](../../pubnub-app-context/references/metadata-and-filtering.md). Functions: [Before/After Publish, `request.ok()`/`request.abort()`](../../pubnub-functions/references/functions-basics.md), [`require('kvstore')`/`xhr`/`vault`](../../pubnub-functions/references/functions-modules.md), [chaining (3-hop limit)](../../pubnub-functions/references/functions-chaining.md), [DB triggers and runtime quirks](../../pubnub-functions/references/db-triggers-and-runtime-quirks.md), [common patterns](../../pubnub-functions/references/functions-patterns.md). Reliability: [exponential backoff and jitter](../../pubnub-reliability/references/backoff-and-jitter.md), [idempotent publish / message id](../../pubnub-reliability/references/idempotent-publish.md), [dedup on merge](../../pubnub-reliability/references/dedup-on-merge.md), [queue and retry](../../pubnub-reliability/references/queue-and-retry.md), [schema version](../../pubnub-reliability/references/schema-versioning.md). Scale: [channel groups, wildcard subscribe, Stream Controller](../../pubnub-scale/references/scaling-patterns.md), [performance tuning](../../pubnub-scale/references/performance.md), [10K+ live events](../../pubnub-scale/references/large-events.md). Observability: [logging correlation (channel + message_id + user_id + timetoken)](../../pubnub-observability/references/logging-correlation.md), [test pyramid](../../pubnub-observability/references/test-pyramid.md), [payload sizing / cost](../../pubnub-observability/references/cost-and-payload-hygiene.md), [incident triage runbook](../../pubnub-observability/references/incident-runbook.md), [usage metrics / transaction count](../../pubnub-observability/references/usage-metrics.md). Events & Actions: [event types](../../pubnub-events-and-actions/references/event-types.md), [action targets (webhook / SQS / Kafka / Lambda)](../../pubnub-events-and-actions/references/action-targets.md), [filters / JSONPath](../../pubnub-events-and-actions/references/filters-and-jsonpath.md). Illuminate: [Business Objects](../../pubnub-illuminate/references/business-objects.md), [Metrics](../../pubnub-illuminate/references/metrics.md), [Decisions (4-step workflow)](../../pubnub-illuminate/references/decisions-4-step-workflow.md), [Queries](../../pubnub-illuminate/references/queries-adhoc-vs-saved.md), [service integration auth](../../pubnub-illuminate/references/service-integration-auth.md). Chat: [Chat SDK setup](../../pubnub-chat/references/chat-setup.md), [message actions / reactions](../../pubnub-chat/references/message-actions.md), [file sharing / `sendFile`](../../pubnub-chat/references/file-sharing.md), [threading](../../pubnub-chat/references/threading.md). Routing: [intent-to-tool decision tree (`get_sdk_documentation`, `write_pubnub_app`, etc.)](../../pubnub-choose-docs-path/references/intent-to-tool.md).
-
-
 # PubNub Telemedicine Features
 
 This reference covers core telemedicine features built on PubNub: patient queue management, real-time notifications, provider availability tracking, consent management, and secure file sharing.
@@ -111,16 +106,7 @@ class PatientQueueManager {
 }
 ```
 
-### Queue Status Transitions
-
-| Current Status | Valid Transitions | Triggered By |
-|---------------|-------------------|--------------|
-| `checked-in` | `waiting`, `cancelled` | Patient completes device check / Patient cancels |
-| `waiting` | `in-consultation`, `no-show`, `cancelled` | Provider starts session / Timeout / Patient cancels |
-| `in-consultation` | `completed`, `waiting` | Provider ends session / Provider returns to queue |
-| `completed` | (terminal) | Consultation finished |
-| `no-show` | `waiting` | Patient returns within grace period |
-| `cancelled` | `checked-in` | Patient reschedules same day |
+Publish queue mutations on `queue.{departmentId}` and persist the list in channel metadata. Product workflow (no-show timers, priority override) lives in your app, not this skill.
 
 ## Real-Time Notifications
 
@@ -193,26 +179,6 @@ class TelemedicineNotificationService {
     });
 
     return payload.id;
-  }
-
-  async scheduleReminder(appointmentId, patientId, appointmentTime, minutesBefore = 15) {
-    const reminderTime = new Date(appointmentTime);
-    reminderTime.setMinutes(reminderTime.getMinutes() - minutesBefore);
-
-    return {
-      appointmentId,
-      patientId,
-      scheduledFor: reminderTime.toISOString(),
-      notification: {
-        type: 'APPOINTMENT_REMINDER',
-        title: 'Upcoming Appointment',
-        body: `Your telemedicine appointment starts in ${minutesBefore} minutes.`,
-        priority: 'high',
-        appointmentId,
-        senderId: 'system',
-        actionUrl: `/appointments/${appointmentId}/join`
-      }
-    };
   }
 }
 ```
@@ -411,33 +377,9 @@ class SecureFileSharing {
 
 ## Best Practices
 
-### Queue Management
-
-- Implement automatic no-show detection with a configurable timeout (typically 10-15 minutes past appointment time)
-- Send progressive notifications as wait times change: initial estimate, updated estimate at 50% wait, and a "provider ready" alert
-- Support priority override for urgent cases that need to bypass the standard queue order
-- Persist queue state to your database in addition to PubNub channel metadata for recovery after outages
-
-### Notifications
-
-- Use PubNub Mobile Push for appointment reminders so notifications reach patients even when the app is backgrounded
-- Include actionable deep links in notifications so patients can join consultations with a single tap
-- Implement notification deduplication to prevent repeated alerts when patients have multiple devices
-
-### Provider Availability
-
-- Combine Presence events with manual status updates for accurate availability -- Presence detects connectivity, manual status reflects clinical availability
-- Implement automatic status transitions: set to `in-consultation` when a session starts and back to `available` when it ends
-- Track provider capacity (concurrent patients) to prevent overloading
-
-### Consent and Compliance
-
-- Always verify consent before establishing a consultation channel -- block channel access if consent is not recorded
-- Record consent events immutably: never delete consent records, only append revocation records
-- Support multiple consent types independently (telehealth, data sharing, recording)
-
-### File Sharing
-
-- Restrict file types to clinical document formats and common image types -- block executable files
-- Scan uploaded files for malware before making them available to recipients
-- Implement automatic file expiry for sensitive documents like prescriptions
+- Persist queue state in App Context **and** your database so recovery is not history-only
+- Use Mobile Push on `notification.{userId}` so reminders arrive when the app is backgrounded
+- Combine Presence occupancy with `setState` so connectivity and clinical availability stay distinct
+- Verify consent in App Context (`consent_{type}`) before granting the consultation channel
+- Record consent via `setUUIDMetadata`; revoke by appending `granted: false`, do not delete the custom field
+- Restrict `sendFile` types on `{consultationId}.files` and audit every share

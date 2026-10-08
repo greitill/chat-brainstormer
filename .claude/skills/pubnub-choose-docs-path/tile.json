@@ -1,0 +1,12 @@
+{
+  "name": "pubnub/pubnub-choose-docs-path",
+  "version": "0.1.0",
+  "private": false,
+  "summary": "Routes PubNub questions to the correct documentation source, MCP tool, and specialist skill",
+  "skills": {
+    "pubnub-choose-docs-path": {
+      "path": "SKILL.md"
+    }
+  },
+  "dependencies": {}
+}

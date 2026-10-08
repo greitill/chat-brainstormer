@@ -12,14 +12,17 @@ metadata:
   output-format: code
 ---
 
-<!-- xrefs-injected -->
 
-> **Canonical owners (link-don't-copy):** This vertical relies on cross-cutting skills. Always link to the canonical owner instead of duplicating. Foundations: [SDK initialization (`new PubNub(`, `userId`/UUID)](../pubnub-app-developer/references/sdk-patterns.md), [pub/sub basics (`pubnub.publish(`, `pubnub.subscribe(`, `addListener`)](../pubnub-app-developer/references/publish-subscribe.md), [channel naming](../pubnub-app-developer/references/channels.md), [message filters](../pubnub-app-developer/references/message-filters.md), [SDK upgrades](../pubnub-app-developer/references/sdk-upgrades.md), [REST API](../pubnub-app-developer/references/rest-api.md). Environment: [keysets, env separation, publish/subscribe/secret keys](../pubnub-keyset-management/references/keysets-and-environments.md), [key rotation hygiene](../pubnub-keyset-management/references/key-rotation-and-hygiene.md), [demo keys](../pubnub-keyset-management/references/demo-keys.md), [custom origin](../pubnub-keyset-management/references/custom-origin.md). Security: [Access Manager / `grantToken`](../pubnub-security/references/access-manager.md), [AES-256 / message encryption](../pubnub-security/references/encryption.md), [IP allowlisting](../pubnub-security/references/ip-whitelisting.md), [DoS mitigation](../pubnub-security/references/dos-mitigation.md), [compliance / SOC 2 / HIPAA](../pubnub-security/references/compliance-reports.md). Real-time features: [presence events / `withPresence`](../pubnub-presence/references/presence-events.md), [presence setup / heartbeat](../pubnub-presence/references/presence-setup.md), [dropped connections](../pubnub-presence/references/dropped-connections.md), [multi-device sync](../pubnub-presence/references/multi-device-sync.md). History: [Message Persistence and `fetchMessages`](../pubnub-history/references/pagination-and-ordering.md), [offline catch-up](../pubnub-history/references/offline-catch-up.md), [retention](../pubnub-history/references/retention-and-storage.md). App Context: [users / user metadata](../pubnub-app-context/references/users.md), [channels and memberships](../pubnub-app-context/references/channels-and-memberships.md), [metadata and filtering](../pubnub-app-context/references/metadata-and-filtering.md). Functions: [Before/After Publish, `request.ok()`/`request.abort()`](../pubnub-functions/references/functions-basics.md), [`require('kvstore')`/`xhr`/`vault`](../pubnub-functions/references/functions-modules.md), [chaining (3-hop limit)](../pubnub-functions/references/functions-chaining.md), [DB triggers and runtime quirks](../pubnub-functions/references/db-triggers-and-runtime-quirks.md), [common patterns](../pubnub-functions/references/functions-patterns.md). Reliability: [exponential backoff and jitter](../pubnub-reliability/references/backoff-and-jitter.md), [idempotent publish / message id](../pubnub-reliability/references/idempotent-publish.md), [dedup on merge](../pubnub-reliability/references/dedup-on-merge.md), [queue and retry](../pubnub-reliability/references/queue-and-retry.md), [schema version](../pubnub-reliability/references/schema-versioning.md). Scale: [channel groups, wildcard subscribe, Stream Controller](../pubnub-scale/references/scaling-patterns.md), [performance tuning](../pubnub-scale/references/performance.md), [10K+ live events](../pubnub-scale/references/large-events.md). Observability: [logging correlation (channel + message_id + user_id + timetoken)](../pubnub-observability/references/logging-correlation.md), [test pyramid](../pubnub-observability/references/test-pyramid.md), [payload sizing / cost](../pubnub-observability/references/cost-and-payload-hygiene.md), [incident triage runbook](../pubnub-observability/references/incident-runbook.md), [usage metrics / transaction count](../pubnub-observability/references/usage-metrics.md). Events & Actions: [event types](../pubnub-events-and-actions/references/event-types.md), [action targets (webhook / SQS / Kafka / Lambda)](../pubnub-events-and-actions/references/action-targets.md), [filters / JSONPath](../pubnub-events-and-actions/references/filters-and-jsonpath.md). Illuminate: [Business Objects](../pubnub-illuminate/references/business-objects.md), [Metrics](../pubnub-illuminate/references/metrics.md), [Decisions (4-step workflow)](../pubnub-illuminate/references/decisions-4-step-workflow.md), [Queries](../pubnub-illuminate/references/queries-adhoc-vs-saved.md), [service integration auth](../pubnub-illuminate/references/service-integration-auth.md). Chat: [Chat SDK setup](../pubnub-chat/references/chat-setup.md), [message actions / reactions](../pubnub-chat/references/message-actions.md), [file sharing / `sendFile`](../pubnub-chat/references/file-sharing.md), [threading](../pubnub-chat/references/threading.md). Routing: [intent-to-tool decision tree (`get_sdk_documentation`, `write_pubnub_app`, etc.)](../pubnub-choose-docs-path/references/intent-to-tool.md).
 
 
 # PubNub Telemedicine Specialist
 
 You are a specialist in building HIPAA-compliant telemedicine applications using PubNub's real-time messaging infrastructure. You help developers implement secure patient-provider communication, virtual waiting rooms, video consultation signaling, appointment notifications, and healthcare data exchange — all while meeting strict regulatory requirements for protected health information (PHI).
+
+> **Precedence:** PubNub MCP tools and pubnub.com/docs are authoritative for API shapes, limits, and configuration values. This skill is authoritative for patterns, sequencing, and design tradeoffs.
+
+> **When PubNub MCP tools are absent:** Treat PubNub MCP as absent only when this session has no PubNub MCP tools (typically namespace `user-pubnub`). Do not ask the user to check MCP if those tools are already listed. If they are absent and the task needs API shapes, limits, tool schemas, configuration values, or live keyset/runtime operations: tell the user once that PubNub MCP should be enabled (https://www.pubnub.com/docs/ai/pubnub-mcp-server); this skill can still provide patterns, sequencing, and design tradeoffs. Do not treat training data as authoritative for those facts — do not emit confident SDK method signatures, numeric limits, or MCP tool argument lists from memory. Continue with pattern-level guidance, or stop on the fact-dependent part until MCP is enabled. Chat questions still route to Chat SDK docs/MCP (`get_chat_sdk_documentation`), not Core SDK.
+
 
 ## When to Use This Skill
 
@@ -58,64 +61,7 @@ Invoke this skill when:
 
 ### HIPAA-Compliant PubNub Configuration
 
-Every telemedicine application must initialize PubNub with encryption enabled and Access Manager enforcing role-based access. PHI must never traverse unencrypted channels.
-
-```javascript
-import PubNub from 'pubnub';
-
-const pubnub = new PubNub({
-  publishKey: process.env.PUBNUB_PUBLISH_KEY,
-  subscribeKey: process.env.PUBNUB_SUBSCRIBE_KEY,
-  secretKey: process.env.PUBNUB_SECRET_KEY, // Server-side only
-  userId: currentUser.id,
-  cryptoModule: PubNub.CryptoModule.aesCbcCryptoModule({
-    cipherKey: process.env.PUBNUB_CIPHER_KEY
-  }),
-  ssl: true,
-  logVerbosity: false // Disable in production to prevent PHI leaks in logs
-});
-```
-
-### Encrypted Messaging for PHI
-
-All messages containing patient data must be published on encrypted channels with proper access tokens. Message payloads should minimize PHI exposure.
-
-```javascript
-async function sendSecureMessage(channelId, message, senderRole) {
-  const payload = {
-    id: crypto.randomUUID(),
-    type: message.type,
-    content: message.content,
-    sender: {
-      id: message.senderId,
-      role: senderRole // 'provider' | 'patient' | 'nurse'
-    },
-    timestamp: new Date().toISOString(),
-    metadata: {
-      encrypted: true,
-      consentVerified: true,
-      auditRef: crypto.randomUUID()
-    }
-  };
-
-  try {
-    const result = await pubnub.publish({
-      channel: channelId,
-      message: payload,
-      storeInHistory: true,
-      meta: {
-        senderRole: senderRole,
-        messageType: message.type
-      }
-    });
-    await logAuditEvent('MESSAGE_SENT', channelId, payload.metadata.auditRef);
-    return result;
-  } catch (error) {
-    await logAuditEvent('MESSAGE_FAILED', channelId, payload.metadata.auditRef);
-    throw new Error(`Secure message delivery failed: ${error.message}`);
-  }
-}
-```
+Initialize with CryptoModule on every PHI client. See [telemedicine-setup.md](references/telemedicine-setup.md) and [encryption.md](../pubnub-security/references/encryption.md). Do not send unencrypted health data.
 
 ### Access Manager for Healthcare Roles
 
@@ -174,7 +120,7 @@ async function grantPatientAccess(patientId, consultationChannelId, ttlMinutes =
 - All channels transmitting PHI must use AES-256 encryption via PubNub's CryptoModule — never send unencrypted health data
 - A signed Business Associate Agreement (BAA) with PubNub must be in place before handling any PHI in production
 - Access Manager tokens must enforce least-privilege and use short TTLs (15-60 minutes) that match consultation session durations
-- Message history retention must comply with organizational and jurisdictional record-keeping requirements (typically 6-10 years for medical records)
+- Message history retention must follow your organizational policy — do not copy statutory year tables into the skill; video signaling uses `storeInHistory: false`
 - Audit logs must capture all message events, access grants, and consent actions for HIPAA compliance verification
 - Never log PHI to console, application logs, or third-party monitoring services — audit logs must store references, not raw patient data
 
@@ -183,15 +129,15 @@ async function grantPatientAccess(patientId, consultationChannelId, ttlMinutes =
 - **`get_chat_sdk_documentation`** — pull Chat SDK reference for the patient-provider conversation surface (route via [intent-to-tool](../pubnub-choose-docs-path/references/intent-to-tool.md))
 - **`get_sdk_documentation`** — pull SDK-specific publish/subscribe APIs
 - **`grant_token`** — issue scoped grants per encounter (patient + provider only, short TTL)
-- **`create_pubnub_function`** — scaffold the Before-Publish consent / PHI redaction validator
+- **`manage_functions`** (`resource=package`, `operation=create`) — create the Before-Publish consent / PHI redaction validator package
 - **`manage_apps`** — verify Message Persistence and add-ons against your BAA
 
 ## See Also
 
 - **[pubnub-security](../pubnub-security/SKILL.md)** — [Access Manager](../pubnub-security/references/access-manager.md) for per-encounter grants, [AES-256 / message encryption](../pubnub-security/references/encryption.md) for PHI, [IP allowlisting](../pubnub-security/references/ip-whitelisting.md) for clinical backends, [compliance / HIPAA / SOC 2](../pubnub-security/references/compliance-reports.md) (start here for BAA flow)
 - **[pubnub-functions](../pubnub-functions/SKILL.md)** — [Before Publish for consent verification and PHI redaction](../pubnub-functions/references/functions-basics.md), [`require('vault')` for keys](../pubnub-functions/references/functions-modules.md), [DB-trigger to audit log](../pubnub-functions/references/db-triggers-and-runtime-quirks.md)
-- **[pubnub-presence](../pubnub-presence/SKILL.md)** — [provider availability and patient connection status](../pubnub-presence/references/presence-events.md), [dropped-connection recovery during a visit](../pubnub-presence/references/dropped-connections.md), [multi-device sync (provider tablet + workstation)](../pubnub-presence/references/multi-device-sync.md)
-- **[pubnub-chat](../pubnub-chat/SKILL.md)** — [Chat SDK](../pubnub-chat/references/chat-setup.md) for patient-provider messaging, [file sharing for documents and images](../pubnub-chat/references/file-sharing.md), [threading for asynchronous follow-up](../pubnub-chat/references/threading.md)
+- **[pubnub-presence](../pubnub-presence/SKILL.md)** — [provider availability and patient connection status](../pubnub-presence/SKILL.md), [dropped-connection recovery during a visit](../pubnub-presence/references/dropped-connections.md), [multi-device sync (provider tablet + workstation)](../pubnub-presence/references/multi-device-sync.md)
+- **[pubnub-chat](../pubnub-chat/SKILL.md)** — [Chat SDK](../pubnub-chat/SKILL.md) for patient-provider messaging, [file sharing for documents and images](../pubnub-chat/references/file-sharing.md), [threading for asynchronous follow-up](../pubnub-chat/references/threading.md)
 - **[pubnub-reliability](../pubnub-reliability/SKILL.md)** — [idempotent publish](../pubnub-reliability/references/idempotent-publish.md) so retries don't duplicate clinical events; [queue-and-retry](../pubnub-reliability/references/queue-and-retry.md) for low-bandwidth patient apps
 - **[pubnub-history](../pubnub-history/SKILL.md)** — [Message Persistence](../pubnub-history/references/pagination-and-ordering.md) for required clinical audit trails (configure [retention](../pubnub-history/references/retention-and-storage.md) per your retention policy)
 - **[pubnub-app-context](../pubnub-app-context/SKILL.md)** — [provider directory, patient roster (PHI-safe portion only)](../pubnub-app-context/references/users.md)

@@ -1,54 +1,12 @@
-<!-- xrefs-injected -->
-
-> **Canonical owners (link-don't-copy):** This vertical relies on cross-cutting skills. Always link to the canonical owner instead of duplicating. Foundations: [SDK initialization (`new PubNub(`, `userId`/UUID)](../../pubnub-app-developer/references/sdk-patterns.md), [pub/sub basics (`pubnub.publish(`, `pubnub.subscribe(`, `addListener`)](../../pubnub-app-developer/references/publish-subscribe.md), [channel naming](../../pubnub-app-developer/references/channels.md), [message filters](../../pubnub-app-developer/references/message-filters.md), [SDK upgrades](../../pubnub-app-developer/references/sdk-upgrades.md), [REST API](../../pubnub-app-developer/references/rest-api.md). Environment: [keysets, env separation, publish/subscribe/secret keys](../../pubnub-keyset-management/references/keysets-and-environments.md), [key rotation hygiene](../../pubnub-keyset-management/references/key-rotation-and-hygiene.md), [demo keys](../../pubnub-keyset-management/references/demo-keys.md), [custom origin](../../pubnub-keyset-management/references/custom-origin.md). Security: [Access Manager / `grantToken`](../../pubnub-security/references/access-manager.md), [AES-256 / message encryption](../../pubnub-security/references/encryption.md), [IP allowlisting](../../pubnub-security/references/ip-whitelisting.md), [DoS mitigation](../../pubnub-security/references/dos-mitigation.md), [compliance / SOC 2 / HIPAA](../../pubnub-security/references/compliance-reports.md). Real-time features: [presence events / `withPresence`](../../pubnub-presence/references/presence-events.md), [presence setup / heartbeat](../../pubnub-presence/references/presence-setup.md), [dropped connections](../../pubnub-presence/references/dropped-connections.md), [multi-device sync](../../pubnub-presence/references/multi-device-sync.md). History: [Message Persistence and `fetchMessages`](../../pubnub-history/references/pagination-and-ordering.md), [offline catch-up](../../pubnub-history/references/offline-catch-up.md), [retention](../../pubnub-history/references/retention-and-storage.md). App Context: [users / user metadata](../../pubnub-app-context/references/users.md), [channels and memberships](../../pubnub-app-context/references/channels-and-memberships.md), [metadata and filtering](../../pubnub-app-context/references/metadata-and-filtering.md). Functions: [Before/After Publish, `request.ok()`/`request.abort()`](../../pubnub-functions/references/functions-basics.md), [`require('kvstore')`/`xhr`/`vault`](../../pubnub-functions/references/functions-modules.md), [chaining (3-hop limit)](../../pubnub-functions/references/functions-chaining.md), [DB triggers and runtime quirks](../../pubnub-functions/references/db-triggers-and-runtime-quirks.md), [common patterns](../../pubnub-functions/references/functions-patterns.md). Reliability: [exponential backoff and jitter](../../pubnub-reliability/references/backoff-and-jitter.md), [idempotent publish / message id](../../pubnub-reliability/references/idempotent-publish.md), [dedup on merge](../../pubnub-reliability/references/dedup-on-merge.md), [queue and retry](../../pubnub-reliability/references/queue-and-retry.md), [schema version](../../pubnub-reliability/references/schema-versioning.md). Scale: [channel groups, wildcard subscribe, Stream Controller](../../pubnub-scale/references/scaling-patterns.md), [performance tuning](../../pubnub-scale/references/performance.md), [10K+ live events](../../pubnub-scale/references/large-events.md). Observability: [logging correlation (channel + message_id + user_id + timetoken)](../../pubnub-observability/references/logging-correlation.md), [test pyramid](../../pubnub-observability/references/test-pyramid.md), [payload sizing / cost](../../pubnub-observability/references/cost-and-payload-hygiene.md), [incident triage runbook](../../pubnub-observability/references/incident-runbook.md), [usage metrics / transaction count](../../pubnub-observability/references/usage-metrics.md). Events & Actions: [event types](../../pubnub-events-and-actions/references/event-types.md), [action targets (webhook / SQS / Kafka / Lambda)](../../pubnub-events-and-actions/references/action-targets.md), [filters / JSONPath](../../pubnub-events-and-actions/references/filters-and-jsonpath.md). Illuminate: [Business Objects](../../pubnub-illuminate/references/business-objects.md), [Metrics](../../pubnub-illuminate/references/metrics.md), [Decisions (4-step workflow)](../../pubnub-illuminate/references/decisions-4-step-workflow.md), [Queries](../../pubnub-illuminate/references/queries-adhoc-vs-saved.md), [service integration auth](../../pubnub-illuminate/references/service-integration-auth.md). Chat: [Chat SDK setup](../../pubnub-chat/references/chat-setup.md), [message actions / reactions](../../pubnub-chat/references/message-actions.md), [file sharing / `sendFile`](../../pubnub-chat/references/file-sharing.md), [threading](../../pubnub-chat/references/threading.md). Routing: [intent-to-tool decision tree (`get_sdk_documentation`, `write_pubnub_app`, etc.)](../../pubnub-choose-docs-path/references/intent-to-tool.md).
-
-
 # PubNub Multiplayer Gaming Setup
 
-## Installation
-
-### JavaScript/TypeScript
-
-```bash
-npm install pubnub
-# or
-yarn add pubnub
-```
-
-### Swift (iOS)
-
-```swift
-// Package.swift or CocoaPods
-// SPM: https://github.com/pubnub/swift
-// CocoaPods: pod 'PubNubSwift', '~> 7.0'
-```
-
-### Kotlin (Android)
-
-```kotlin
-// build.gradle
-implementation("com.pubnub:pubnub-kotlin:9.0.0")
-```
-
-### Prerequisites
+## Prerequisites
 
 - PubNub account with Publish and Subscribe keys from the Admin Portal
 - **Presence** feature enabled on your keyset
 - **App Context** (Objects) enabled for storing room and player metadata
 - **Message Persistence** enabled if you need game state recovery
 - Optionally: **PubNub Functions** enabled for server-side validation
-
-## Basic Initialization
-
-```javascript
-import PubNub from 'pubnub';
-
-const pubnub = new PubNub({
-  publishKey: 'pub-c-...',
-  subscribeKey: 'sub-c-...',
-  userId: 'player-unique-id'
-});
-```
 
 ## Gaming-Optimized Configuration
 
@@ -69,11 +27,11 @@ const pubnub = new PubNub({
     maximumRetry: 10            // Retry up to 10 times
   }),
 
-  // Optional: Access Manager
-  authKey: 'auth-token-from-server',
-
+  // Optional: Access Manager — call setToken(token) after init (not authKey)
   // Optional: message encryption
-  cipherKey: 'shared-game-secret'
+  cryptoModule: PubNub.CryptoModule.aesCbcCryptoModule({
+    cipherKey: 'shared-game-secret'
+  })
 });
 ```
 
@@ -287,7 +245,6 @@ async function startGame(pubnub, roomId, hostPlayerId) {
     message: {
       type: 'game-start',
       players,
-      initialState: buildInitialGameState(players, roomInfo.gameType),
       timestamp: Date.now()
     }
   });
@@ -302,21 +259,6 @@ async function startGame(pubnub, roomId, hostPlayerId) {
   });
 
   return { players, roomInfo };
-}
-
-function buildInitialGameState(players, gameType) {
-  return {
-    players: players.map((id, index) => ({
-      id,
-      index,
-      score: 0,
-      isActive: true
-    })),
-    turn: 0,
-    round: 1,
-    gameType,
-    startedAt: Date.now()
-  };
 }
 ```
 
@@ -402,8 +344,6 @@ function setupLobby(pubnub, gameType) {
           }
           break;
       }
-
-      onLobbyUpdate(Array.from(availableRooms.values()));
     }
   });
 
@@ -457,7 +397,6 @@ function setupPresenceHandling(pubnub, roomId, callbacks) {
           break;
 
         case 'timeout':
-          // Player lost connection
           callbacks.onPlayerDisconnect?.(event.uuid);
           break;
 
@@ -472,6 +411,8 @@ function setupPresenceHandling(pubnub, roomId, callbacks) {
 
 ### Handling Disconnections
 
+Publish room events so remaining clients can pause, wait, or request a snapshot (see [gaming-state-sync.md](gaming-state-sync.md)).
+
 ```javascript
 class PlayerConnectionManager {
   constructor(pubnub, roomId, options = {}) {
@@ -482,9 +423,6 @@ class PlayerConnectionManager {
   }
 
   handleDisconnect(playerId) {
-    console.log(`Player ${playerId} disconnected`);
-
-    // Start a reconnection timer
     const timer = setTimeout(() => {
       this.handleAbandon(playerId);
     }, this.reconnectTimeout);
@@ -494,7 +432,6 @@ class PlayerConnectionManager {
       timer
     });
 
-    // Notify other players
     this.pubnub.publish({
       channel: `game.${this.roomId}`,
       message: {
@@ -539,47 +476,7 @@ class PlayerConnectionManager {
 
 ## Error Handling
 
-```javascript
-pubnub.addListener({
-  status: (statusEvent) => {
-    switch (statusEvent.category) {
-      case 'PNConnectedCategory':
-        console.log('Connected to PubNub');
-        break;
-
-      case 'PNReconnectedCategory':
-        console.log('Reconnected - requesting state recovery');
-        requestStateSnapshot();
-        break;
-
-      case 'PNDisconnectedCategory':
-        console.warn('Disconnected from PubNub');
-        showReconnectingUI();
-        break;
-
-      case 'PNAccessDeniedCategory':
-        console.error('Access denied - refresh auth token');
-        refreshAuthToken();
-        break;
-
-      case 'PNNetworkIssuesCategory':
-        console.warn('Network issues detected');
-        break;
-    }
-  }
-});
-
-function requestStateSnapshot() {
-  pubnub.publish({
-    channel: `game.${currentRoomId}.state`,
-    message: {
-      type: 'state-request',
-      requesterId: pubnub.getUserId(),
-      timestamp: Date.now()
-    }
-  });
-}
-```
+Wire PubNub status categories per [backoff-and-jitter](../../pubnub-reliability/references/backoff-and-jitter.md) and [dropped-connections](../../pubnub-presence/references/dropped-connections.md). **Game-specific on `PNReconnectedCategory`:** request a state snapshot on the room's `.state` channel (see [gaming-state-sync — snapshots](gaming-state-sync.md)).
 
 ## Best Practices
 
@@ -599,6 +496,4 @@ function requestStateSnapshot() {
 
 8. **Use channel groups** when a player needs to subscribe to many channels simultaneously (e.g., multiple game lobbies), staying within the subscribe call limits.
 
-9. **Test with realistic latency** -- PubNub delivers messages in ~30-100ms globally, but always test your game logic under simulated latency conditions.
-
-10. **Rate limit publishing** on the client side to prevent flooding the game state channel; batch frequent updates into fewer messages where possible.
+9. **Rate limit publishing** on the client side to prevent flooding the game state channel; batch frequent updates into fewer messages where possible.

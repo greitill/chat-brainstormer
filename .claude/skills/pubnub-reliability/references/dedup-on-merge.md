@@ -1,0 +1,102 @@
+# Dedup on Merge
+
+The canonical reference for deduplicating messages when combining live subscription with historical fetch, or when the same message could arrive twice via the network.
+
+## When You Need It
+
+| Scenario | Dedup needed? |
+|---|---|
+| Live subscription only, no retries | No — PubNub guarantees at-most-once per subscriber for a single connection |
+| Live subscription with idempotent retry on the producer | Yes — same message_id can arrive twice if a producer retries successfully |
+| Live + history merge (offline catch-up) | Yes — overlap window almost guarantees duplicates |
+| Multiple PubNub instances on the same [userId](../../pubnub-app-developer/SKILL.md) ([multi-device](../../pubnub-presence/references/multi-device-sync.md)) | No — each device is a distinct subscription stream; the user-level dedup is a UI concern |
+| [Function chaining](../../pubnub-functions/references/functions-chaining.md) where a Function publishes downstream | Yes if the Function might retry |
+
+## Dedup Key Choice
+
+| Key | When to use | Notes |
+|---|---|---|
+| `message_id` (client-generated) | Producer is idempotent | Best — survives retries, history fetches, anything |
+| `timetoken` | Producer is not idempotent but you only care about this connection | Unique per publish, but a retry creates a new timetoken |
+| Hash of payload | No `message_id` and no other identifier | Fragile; identical-payload messages dedup as one |
+
+**Always prefer `message_id`** when the producer is under your control. See [idempotent-publish.md](idempotent-publish.md) for how to generate it.
+
+## Bound the seen-set
+
+| Window | Structure | When |
+|--------|-----------|------|
+| Single catch-up / short session | In-memory `Set` of `message_id` (or `timetoken`) | Unbounded is fine for minutes |
+| Long client session | Bounded LRU | Cap memory; size to traffic |
+| Long-running service | TTL map | Expire keys older than the offline window |
+
+Do not ship a generic LRU/TTL implementation here — pick a bound and use `message_id`.
+
+## Live + History Merge
+
+The single most common dedup scenario. See [pubnub-history/references/offline-catch-up.md](../../pubnub-history/references/offline-catch-up.md) for the full flow. The critical merge pattern:
+
+```javascript
+const seen = new LRU(10_000);
+
+function process(msg) {
+  const key = msg.message_id ?? msg.timetoken;
+  if (seen.has(key)) return;
+  seen.add(key);
+  render(msg);
+}
+
+// 1. Catch up first
+const caughtUp = await fetchAllMissed(channel, lastTT);
+for (const msg of caughtUp) process(msg);
+
+// 2. Subscribe live (see [addListener / pubnub.subscribe basics](../../pubnub-app-developer/SKILL.md))
+pubnub.addListener({ message: e => process(e.message ? e : { ...e, message: e.message }) });
+pubnub.subscribe({ channels: [channel] });
+```
+
+Order matters: process caught-up messages first (they're older), then start consuming live. The dedup `Set` already contains everything from the catch-up, so any live message that overlaps is dropped.
+
+## Cross-Channel vs Per-Channel Dedup
+
+Choose based on whether duplicates can cross channels:
+
+| Choice | When |
+|---|---|
+| One global dedup set | Producer publishes the same `message_id` to multiple channels (rare; usually a smell) |
+| Per-channel dedup set | Standard case |
+| Per-(channel, user) dedup set | Multi-tenant where channels can be hit by different `message_id` namespaces |
+
+Default to per-channel.
+
+## Persistent Dedup (Across App Restarts)
+
+For mobile apps that should not re-process messages already shown after a cold start:
+
+```javascript
+async function process(msg) {
+  const key = msg.message_id ?? msg.timetoken;
+  if (await persistentSeen.has(channel, key)) return;
+  await persistentSeen.add(channel, key);
+  render(msg);
+}
+```
+
+Back the persistent set with localStorage, IndexedDB, SQLite, etc. **Bound it** — purge entries older than your offline window (1 day, 1 week).
+
+## Anti-Patterns
+
+| Anti-pattern | Fix |
+|---|---|
+| Unbounded in-memory `Set` for a long-running process | Use LRU or TTL |
+| Dedup by `JSON.stringify(payload)` | Slow; brittle; identical-payload messages collapse |
+| Live-only dedup that doesn't outlive the connection | Persist to local storage if app restarts must not reprocess |
+| Dedup the message before the catch-up pass populates the set | Process catch-up first, live second |
+| Treating PubNub as if it dedupes | PubNub does not dedup; it's the consumer's job |
+| One global set across all channels and users | Per-channel (or per-(channel, user)) instead |
+
+## Related Reading
+
+- [idempotent-publish.md](idempotent-publish.md) — the producer side
+- [queue-and-retry.md](queue-and-retry.md) — offline queue keyed by message_id
+- [pubnub-history/references/offline-catch-up.md](../../pubnub-history/references/offline-catch-up.md) — the merge flow that needs dedup
