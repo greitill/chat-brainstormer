@@ -2,11 +2,7 @@ use crate::config::Config;
 use crate::models::{AnalysisResult, ChatMessage};
 use serde_json::json;
 
-pub async fn analyze_room(
-    config: &Config,
-    room: &str,
-    messages: &[ChatMessage],
-) -> AnalysisResult {
+pub async fn analyze_room(config: &Config, room: &str, messages: &[ChatMessage]) -> AnalysisResult {
     let transcript: Vec<_> = messages
         .iter()
         .filter(|m| m.envelope.kind != "analysis")
@@ -83,8 +79,7 @@ async fn call_openai(
     let content = body["choices"][0]["message"]["content"]
         .as_str()
         .ok_or_else(|| "empty content".to_string())?;
-    let mut parsed: AnalysisResult =
-        serde_json::from_str(content).map_err(|e| e.to_string())?;
+    let mut parsed: AnalysisResult = serde_json::from_str(content).map_err(|e| e.to_string())?;
     parsed.source = "openai".into();
     Ok(parsed)
 }
@@ -114,7 +109,10 @@ fn local_analysis(room: &str, messages: &[ChatMessage]) -> AnalysisResult {
         .iter()
         .filter(|t| {
             let l = t.to_lowercase();
-            l.contains("idea") || l.contains("what if") || l.contains("could") || l.contains("let's")
+            l.contains("idea")
+                || l.contains("what if")
+                || l.contains("could")
+                || l.contains("let's")
         })
         .take(5)
         .map(|t| (*t).to_string())
@@ -138,7 +136,12 @@ fn local_analysis(room: &str, messages: &[ChatMessage]) -> AnalysisResult {
             themes
         },
         promising_ideas: if promising.is_empty() {
-            texts.iter().rev().take(3).map(|t| format!("Explore: {t}")).collect()
+            texts
+                .iter()
+                .rev()
+                .take(3)
+                .map(|t| format!("Explore: {t}"))
+                .collect()
         } else {
             promising
         },

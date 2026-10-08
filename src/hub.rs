@@ -8,12 +8,12 @@ use crate::models::{
 use crate::rest::PubNubRest;
 use dashmap::DashMap;
 use futures::StreamExt;
+use pubnub::access::permissions;
 use pubnub::dx::subscribe::Update;
 use pubnub::subscribe::{
     EventEmitter, EventSubscriber, MessageActionEvent, Presence, SubscriptionOptions,
     SubscriptionParams,
 };
-use pubnub::access::permissions;
 use pubnub::{Keyset, PubNubClient, PubNubClientBuilder};
 use serde_json::json;
 use std::collections::{HashMap, HashSet};
@@ -324,8 +324,7 @@ impl AppState {
     fn spawn_app_context_refresh_loop(&self) {
         let state = self.clone();
         tokio::spawn(async move {
-            let mut ticker =
-                tokio::time::interval(Duration::from_secs(APP_CONTEXT_REFRESH_SECS));
+            let mut ticker = tokio::time::interval(Duration::from_secs(APP_CONTEXT_REFRESH_SECS));
             ticker.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Delay);
             // First tick completes immediately; skip — we already loaded at startup.
             ticker.tick().await;
@@ -485,10 +484,7 @@ impl AppState {
                                     // An edit carries the replacement text as its
                                     // value; the published payload never changes.
                                     "edited"
-                                        if !matches!(
-                                            action.event,
-                                            MessageActionEvent::Delete
-                                        ) =>
+                                        if !matches!(action.event, MessageActionEvent::Delete) =>
                                     {
                                         let _ = tx.send(ServerEvent::MessageEdited {
                                             room,
@@ -499,10 +495,7 @@ impl AppState {
                                     // Moderation tools (BizOps) soft-delete: the
                                     // message stays in history carrying this action.
                                     "deleted"
-                                        if !matches!(
-                                            action.event,
-                                            MessageActionEvent::Delete
-                                        ) =>
+                                        if !matches!(action.event, MessageActionEvent::Delete) =>
                                     {
                                         let _ = tx.send(ServerEvent::MessageDeleted {
                                             room,
@@ -544,10 +537,7 @@ impl AppState {
         display_name: &str,
         avatar_color: Option<&str>,
     ) -> UserProfile {
-        let cached_color = self
-            .profiles
-            .get(user_id)
-            .map(|p| p.avatar_color.clone());
+        let cached_color = self.profiles.get(user_id).map(|p| p.avatar_color.clone());
         // Prefer client color, then memory, then App Context, then default.
         let color = if let Some(c) = avatar_color {
             sanitize_avatar_color(Some(c))
@@ -567,8 +557,7 @@ impl AppState {
         };
         self.names
             .insert(user_id.to_string(), display_name.to_string());
-        self.profiles
-            .insert(user_id.to_string(), profile.clone());
+        self.profiles.insert(user_id.to_string(), profile.clone());
 
         if let Err(err) = self.rest.set_uuid_metadata(&profile).await {
             tracing::warn!("App Context setUUIDMetadata failed for {user_id}: {err}");
@@ -673,12 +662,7 @@ impl AppState {
         Ok(())
     }
 
-    pub async fn typing(
-        &self,
-        room_slug: &str,
-        user_id: &str,
-        typing: bool,
-    ) -> Result<(), String> {
+    pub async fn typing(&self, room_slug: &str, user_id: &str, typing: bool) -> Result<(), String> {
         let channel = self.channel_for(room_slug)?;
         self.rest
             .send_signal(
@@ -861,6 +845,10 @@ fn online_users_for(
                 .collect()
         })
         .unwrap_or_default();
-    users.sort_by(|a, b| a.display_name.to_lowercase().cmp(&b.display_name.to_lowercase()));
+    users.sort_by(|a, b| {
+        a.display_name
+            .to_lowercase()
+            .cmp(&b.display_name.to_lowercase())
+    });
     users
 }

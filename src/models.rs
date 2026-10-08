@@ -65,10 +65,7 @@ pub fn sanitize_avatar_color(value: Option<&str>) -> String {
     };
     let hex = raw.strip_prefix('#').unwrap_or(raw);
     if hex.len() == 3 && hex.chars().all(|c| c.is_ascii_hexdigit()) {
-        let expanded: String = hex
-            .chars()
-            .flat_map(|c| [c, c])
-            .collect();
+        let expanded: String = hex.chars().flat_map(|c| [c, c]).collect();
         return format!("#{expanded}");
     }
     if hex.len() == 6 && hex.chars().all(|c| c.is_ascii_hexdigit()) {

@@ -602,7 +602,10 @@ fn parse_v2_history_item(item: &Value) -> Option<ChatMessage> {
     // [message, timetoken] or {message, timetoken, meta, uuid}
     if let Some(arr) = item.as_array() {
         let message = arr.first()?;
-        let timetoken = arr.get(1)?.as_u64().map(|n| n.to_string())
+        let timetoken = arr
+            .get(1)?
+            .as_u64()
+            .map(|n| n.to_string())
             .or_else(|| arr.get(1)?.as_str().map(str::to_string))?;
         let envelope = envelope_from_value(message)?;
         return Some(ChatMessage {
@@ -614,9 +617,11 @@ fn parse_v2_history_item(item: &Value) -> Option<ChatMessage> {
         });
     }
 
-    let timetoken = item
-        .get("timetoken")
-        .and_then(|t| t.as_u64().map(|n| n.to_string()).or_else(|| t.as_str().map(str::to_string)))?;
+    let timetoken = item.get("timetoken").and_then(|t| {
+        t.as_u64()
+            .map(|n| n.to_string())
+            .or_else(|| t.as_str().map(str::to_string))
+    })?;
     let message = item.get("message")?;
     let envelope = envelope_from_value(message)?;
     Some(ChatMessage {
