@@ -1,8 +1,17 @@
 ---
-description: "Manages PubNub apps, keysets, and environment separation. Covers the publish/subscribe/secret key model, dev/staging/prod isolation, key rotation hygiene, demo-key boundaries, and custom origin configuration. Use when setting up a new PubNub project, separating environments, rotating keys, configuring demo or production keysets, or asking about apps, keysets, or custom origins."
-license: "PubNub"
-metadata: {"author":"pubnub","version":"0.1.0","domain":"real-time","triggers":"pubnub, app, keyset, environment, dev, staging, production, key rotation, secret key, publish key, subscribe key, demo key, custom origin, vanity domain, admin portal, manage_apps, manage_keysets","role":"specialist","scope":"implementation","output-format":"code"}
+name: pubnub-keyset-management
+description: Manages PubNub apps, keysets, and environment separation. Covers the publish/subscribe/secret key model, dev/staging/prod isolation, key rotation hygiene, demo-key boundaries, and custom origin configuration. Use when setting up a new PubNub project, separating environments, rotating keys, configuring demo or production keysets, or asking about apps, keysets, or custom origins.
+license: PubNub
+metadata:
+  author: pubnub
+  version: "0.1.0"
+  domain: real-time
+  triggers: pubnub, app, keyset, environment, dev, staging, production, key rotation, secret key, publish key, subscribe key, demo key, custom origin, vanity domain, admin portal, manage_apps, manage_keysets
+  role: specialist
+  scope: implementation
+  output-format: code
 ---
+
 # PubNub Keyset Management
 
 You are the foundational PubNub setup specialist. Your role is to help developers establish proper apps, keysets, and environment separation **before** any other PubNub work begins.

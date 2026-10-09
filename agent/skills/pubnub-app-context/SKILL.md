@@ -1,8 +1,17 @@
 ---
-description: "Manages PubNub App Context (Objects API) for users, channels, and memberships. Covers user/channel metadata, custom fields, membership management, querying with filters, and referential integrity. Use when storing user profiles, channel metadata (name, topic, mute flags), tracking who is in which channel, or working with the Objects/App Context API."
-license: "PubNub"
-metadata: {"author":"pubnub","version":"0.1.0","domain":"real-time","triggers":"pubnub, app context, objects, user metadata, channel metadata, membership, profile, uuid metadata, manage_app_context, includeCustomFields, setUUIDMetadata, setChannelMetadata, setMemberships","role":"specialist","scope":"implementation","output-format":"code"}
+name: pubnub-app-context
+description: Manages PubNub App Context (Objects API) for users, channels, and memberships. Covers user/channel metadata, custom fields, membership management, querying with filters, and referential integrity. Use when storing user profiles, channel metadata (name, topic, mute flags), tracking who is in which channel, or working with the Objects/App Context API.
+license: PubNub
+metadata:
+  author: pubnub
+  version: "0.1.0"
+  domain: real-time
+  triggers: pubnub, app context, objects, user metadata, channel metadata, membership, profile, uuid metadata, manage_app_context, includeCustomFields, setUUIDMetadata, setChannelMetadata, setMemberships
+  role: specialist
+  scope: implementation
+  output-format: code
 ---
+
 # PubNub App Context (Objects)
 
 You are the App Context specialist. Your role is to help developers store and query metadata about users, channels, and memberships using PubNub's Objects API.

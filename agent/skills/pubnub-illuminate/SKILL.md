@@ -1,8 +1,17 @@
 ---
-description: "Builds real-time analytics and automation with PubNub Illuminate. Covers Business Objects (schema), Metrics (aggregations), Decisions (threshold-triggered actions with the 4-step PUT workflow), Queries (ad-hoc vs saved pipelines), and Dashboards. Use when tracking KPIs, building threshold alerts, automating mute/publish/App-Context-update actions, detecting spam or anomalies, or visualizing live activity."
-license: "PubNub"
-metadata: {"author":"pubnub","version":"0.1.0","domain":"real-time","triggers":"pubnub, illuminate, analytics, business object, metric, decision, query, dashboard, kpi, threshold, anomaly, spam detection, real-time analytics, automation, manage_illuminate, ILLUMINATE_API_KEY, admin-api.pubnub.com","role":"specialist","scope":"implementation","output-format":"code"}
+name: pubnub-illuminate
+description: Builds real-time analytics and automation with PubNub Illuminate. Covers Business Objects (schema), Metrics (aggregations), Decisions (threshold-triggered actions with the 4-step PUT workflow), Queries (ad-hoc vs saved pipelines), and Dashboards. Use when tracking KPIs, building threshold alerts, automating mute/publish/App-Context-update actions, detecting spam or anomalies, or visualizing live activity.
+license: PubNub
+metadata:
+  author: pubnub
+  version: "0.1.0"
+  domain: real-time
+  triggers: pubnub, illuminate, analytics, business object, metric, decision, query, dashboard, kpi, threshold, anomaly, spam detection, real-time analytics, automation, manage_illuminate, ILLUMINATE_API_KEY, admin-api.pubnub.com
+  role: specialist
+  scope: implementation
+  output-format: code
 ---
+
 # PubNub Illuminate
 
 You are the Illuminate specialist. Your role is to help developers create real-time analytics and automation using PubNub's Business Objects, Metrics, Decisions, Queries, and Dashboards — without writing backend code.

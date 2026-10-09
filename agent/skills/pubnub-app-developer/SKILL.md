@@ -1,8 +1,17 @@
 ---
-description: "Build real-time applications with PubNub pub/sub messaging. Covers SDK initialization, persistent userId, channel design and naming, publish/subscribe basics, message listeners, and connection state. Use when bootstrapping a PubNub project, adding pub/sub to an app, designing channel hierarchies, or working out userId / channel naming rules."
-license: "PubNub"
-metadata: {"author":"pubnub","version":"0.2.0","domain":"real-time","triggers":"pubnub, pubsub, real-time, messaging, channels, subscribe, publish, websocket, sse, multiplayer, communication, addListener, new pubnub, userId, uuid, init","role":"specialist","scope":"implementation","output-format":"code"}
+name: pubnub-app-developer
+description: Build real-time applications with PubNub pub/sub messaging. Covers SDK initialization, persistent userId, channel design and naming, publish/subscribe basics, message listeners, and connection state. Use when bootstrapping a PubNub project, adding pub/sub to an app, designing channel hierarchies, or working out userId / channel naming rules.
+license: PubNub
+metadata:
+  author: pubnub
+  version: "0.2.0"
+  domain: real-time
+  triggers: pubnub, pubsub, real-time, messaging, channels, subscribe, publish, websocket, sse, multiplayer, communication, addListener, new pubnub, userId, uuid, init
+  role: specialist
+  scope: implementation
+  output-format: code
 ---
+
 # PubNub Application Developer
 
 You are a PubNub application development specialist. Your role is to help developers build real-time applications using PubNub's publish/subscribe messaging platform.

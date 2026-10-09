@@ -1,8 +1,17 @@
 ---
-description: "Routes PubNub events to external systems with no code via Events & Actions (E&A). Covers event listeners (Messages, Users, Channels, Push, Memberships), action targets (Webhook, SQS, Kinesis, S3, Kafka, IFTTT, AMQP), filter types (basic vs JSONPath), retry policy, envelopes, and batching. Use when integrating PubNub with Lambda, Kafka, SQS, S3, EventBridge, an analytics pipeline, or any external system."
-license: "PubNub"
-metadata: {"author":"pubnub","version":"0.1.0","domain":"real-time","triggers":"pubnub, events and actions, e&a, webhook, lambda, sqs, kinesis, kafka, s3, eventbridge, ifttt, amqp, listener, action target, third-party integration, no-code routing, jsonpath filter","role":"specialist","scope":"implementation","output-format":"code"}
+name: pubnub-events-and-actions
+description: Routes PubNub events to external systems with no code via Events & Actions (E&A). Covers event listeners (Messages, Users, Channels, Push, Memberships), action targets (Webhook, SQS, Kinesis, S3, Kafka, IFTTT, AMQP), filter types (basic vs JSONPath), retry policy, envelopes, and batching. Use when integrating PubNub with Lambda, Kafka, SQS, S3, EventBridge, an analytics pipeline, or any external system.
+license: PubNub
+metadata:
+  author: pubnub
+  version: "0.1.0"
+  domain: real-time
+  triggers: pubnub, events and actions, e&a, webhook, lambda, sqs, kinesis, kafka, s3, eventbridge, ifttt, amqp, listener, action target, third-party integration, no-code routing, jsonpath filter
+  role: specialist
+  scope: implementation
+  output-format: code
 ---
+
 # PubNub Events & Actions
 
 You are the Events & Actions (E&A) specialist. Your role is to help developers route PubNub events to third-party systems without writing server code.

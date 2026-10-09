@@ -1,8 +1,17 @@
 ---
-description: "Build chat applications with PubNub Chat SDK — direct/group conversations, typing indicators, message actions (reactions, edits, read receipts), file sharing, and threaded messages. App Context (user/channel metadata) is owned by pubnub-app-context; presence is owned by pubnub-presence; this skill focuses on chat-specific Chat SDK APIs."
-license: "PubNub"
-metadata: {"author":"pubnub","version":"0.2.0","domain":"real-time","triggers":"pubnub, chat, messaging, dm, group chat, typing, reactions, threads, message actions, file sharing, sendfile, addmessageaction","role":"specialist","scope":"implementation","output-format":"code"}
+name: pubnub-chat
+description: Build chat applications with PubNub Chat SDK — direct/group conversations, typing indicators, message actions (reactions, edits, read receipts), file sharing, and threaded messages. App Context (user/channel metadata) is owned by pubnub-app-context; presence is owned by pubnub-presence; this skill focuses on chat-specific Chat SDK APIs.
+license: PubNub
+metadata:
+  author: pubnub
+  version: "0.2.0"
+  domain: real-time
+  triggers: pubnub, chat, messaging, dm, group chat, typing, reactions, threads, message actions, file sharing, sendfile, addmessageaction
+  role: specialist
+  scope: implementation
+  output-format: code
 ---
+
 # PubNub Chat SDK Developer
 
 You are the PubNub Chat SDK specialist. Your role is to help developers build chat applications using PubNub's Chat SDK.

@@ -1,8 +1,17 @@
 ---
-description: "Secure PubNub applications with Access Manager v3, end-to-end AES-256 encryption, TLS 1.2+, IP allowlisting, DoS mitigation, and compliance posture (SOC 2, HIPAA, GDPR). Use when designing access control, issuing/revoking tokens, encrypting message and file payloads, hardening network access, or producing compliance evidence. Foundational keyset and rotation concerns are owned by pubnub-keyset-management."
-license: "PubNub"
-metadata: {"author":"pubnub","version":"0.2.0","domain":"real-time","triggers":"pubnub, security, access manager, encryption, aes, tls, auth, ip allowlist, ip whitelist, dos, ddos, soc 2, hipaa, gdpr, compliance","role":"specialist","scope":"implementation","output-format":"code"}
+name: pubnub-security
+description: Secure PubNub applications with Access Manager v3, end-to-end AES-256 encryption, TLS 1.2+, IP allowlisting, DoS mitigation, and compliance posture (SOC 2, HIPAA, GDPR). Use when designing access control, issuing/revoking tokens, encrypting message and file payloads, hardening network access, or producing compliance evidence. Foundational keyset and rotation concerns are owned by pubnub-keyset-management.
+license: PubNub
+metadata:
+  author: pubnub
+  version: "0.2.0"
+  domain: real-time
+  triggers: pubnub, security, access manager, encryption, aes, tls, auth, ip allowlist, ip whitelist, dos, ddos, soc 2, hipaa, gdpr, compliance
+  role: specialist
+  scope: implementation
+  output-format: code
 ---
+
 # PubNub Security Specialist
 
 You are the PubNub security specialist. Your role is to help developers secure real-time applications across access control, payload confidentiality, network hardening, and compliance.

@@ -1,8 +1,17 @@
 ---
-description: "Cross-cutting reliability patterns for PubNub apps. Covers reconnect with exponential backoff + jitter, idempotent publish with client-generated message IDs, dedup-on-merge for live + history streams, queue-and-retry for offline writes, and schema versioning of message envelopes. Use during design reviews, when planning offline support, or during incident response when network or delivery reliability is the concern."
-license: "PubNub"
-metadata: {"author":"pubnub","version":"0.1.0","domain":"real-time","triggers":"pubnub, reliability, retry, backoff, jitter, idempotent, dedup, deduplication, queue, schema version, message envelope, exponential backoff, offline, reconnect strategy","role":"specialist","scope":"implementation","output-format":"code"}
+name: pubnub-reliability
+description: Cross-cutting reliability patterns for PubNub apps. Covers reconnect with exponential backoff + jitter, idempotent publish with client-generated message IDs, dedup-on-merge for live + history streams, queue-and-retry for offline writes, and schema versioning of message envelopes. Use during design reviews, when planning offline support, or during incident response when network or delivery reliability is the concern.
+license: PubNub
+metadata:
+  author: pubnub
+  version: "0.1.0"
+  domain: real-time
+  triggers: pubnub, reliability, retry, backoff, jitter, idempotent, dedup, deduplication, queue, schema version, message envelope, exponential backoff, offline, reconnect strategy
+  role: specialist
+  scope: implementation
+  output-format: code
 ---
+
 # PubNub Reliability Patterns
 
 You are the PubNub reliability specialist. Your role is to provide named, well-known patterns that make a PubNub app behave correctly under disconnect, retry, replay, and version drift.

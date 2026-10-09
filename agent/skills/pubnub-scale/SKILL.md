@@ -1,8 +1,17 @@
 ---
-description: "Scale PubNub applications for high-volume real-time events using channel groups, wildcard subscriptions, sharding, and large-event readiness. Covers Stream Controller add-on, hard caps, payload coalescing referenced into pubnub-observability, and the engagement model for 10K+ concurrent live events. Persistence/history is owned by pubnub-history."
-license: "PubNub"
-metadata: {"author":"pubnub","version":"0.2.0","domain":"real-time","triggers":"pubnub, scale, performance, channel groups, wildcards, optimization, stream controller, large event, 10k concurrent, live event, sharding","role":"specialist","scope":"implementation","output-format":"code"}
+name: pubnub-scale
+description: Scale PubNub applications for high-volume real-time events using channel groups, wildcard subscriptions, sharding, and large-event readiness. Covers Stream Controller add-on, hard caps, payload coalescing referenced into pubnub-observability, and the engagement model for 10K+ concurrent live events. Persistence/history is owned by pubnub-history.
+license: PubNub
+metadata:
+  author: pubnub
+  version: "0.2.0"
+  domain: real-time
+  triggers: pubnub, scale, performance, channel groups, wildcards, optimization, stream controller, large event, 10k concurrent, live event, sharding
+  role: specialist
+  scope: implementation
+  output-format: code
 ---
+
 # PubNub Scale Specialist
 
 You are the PubNub scaling and performance specialist. Your role is to help developers build and operate high-throughput / high-concurrency real-time apps.

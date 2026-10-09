@@ -1,8 +1,17 @@
 ---
-description: "Real-time presence with PubNub. Covers Admin Portal Presence add-on configuration, join/leave/timeout events, hereNow occupancy, presence state, dropped-connection categories (PNNetworkDownCategory etc.), heartbeat tuning, and multi-device sync for the same userId. Use when implementing online/offline indicators, occupancy counts, last-seen tracking, or troubleshooting presence flapping."
-license: "PubNub"
-metadata: {"author":"pubnub","version":"0.2.0","domain":"real-time","triggers":"pubnub, presence, online, offline, occupancy, status, users, hereNow, whereNow, withPresence, presence state, heartbeat, PNNetworkDownCategory, PNReconnectedCategory, multi-device","role":"specialist","scope":"implementation","output-format":"code"}
+name: pubnub-presence
+description: Real-time presence with PubNub. Covers Admin Portal Presence add-on configuration, join/leave/timeout events, hereNow occupancy, presence state, dropped-connection categories (PNNetworkDownCategory etc.), heartbeat tuning, and multi-device sync for the same userId. Use when implementing online/offline indicators, occupancy counts, last-seen tracking, or troubleshooting presence flapping.
+license: PubNub
+metadata:
+  author: pubnub
+  version: "0.2.0"
+  domain: real-time
+  triggers: pubnub, presence, online, offline, occupancy, status, users, hereNow, whereNow, withPresence, presence state, heartbeat, PNNetworkDownCategory, PNReconnectedCategory, multi-device
+  role: specialist
+  scope: implementation
+  output-format: code
 ---
+
 # PubNub Presence Specialist
 
 You are a PubNub presence tracking specialist. Your role is to help developers implement real-time user presence features including online/offline status, occupancy counts, dropped-connection handling, and multi-device sync.

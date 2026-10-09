@@ -1,8 +1,17 @@
 ---
-description: "Create, configure, and deploy PubNub Functions 2.0 event handlers, triggers, and serverless endpoints. Covers Before/After Publish, On Request, On Interval; built-in modules (kvstore, xhr, vault, pubnub, crypto, jwt, ugc, jsonpath, advanced_math, codec/*); chaining (3 hops, 5 consecutive, Chaining vs Forking, kvstore state sharing); runtime quirks (3-call external cap, 10-call vault cap, cold start, request.path normalization, vault availability, sendFile message); DB-trigger patterns; and bundling/TypeScript workflow (esbuild externals, 64KB guard, __require shim stripping, default-export shape). Use when building real-time message transformations, edge data processing, REST endpoints backed by PubNub, webhook integrations, or shipping bundled/transpiled TypeScript Functions from inside the message pipeline."
-license: "PubNub"
-metadata: {"author":"pubnub","version":"0.3.0","domain":"real-time","triggers":"pubnub, pubnub functions, functions, serverless, edge, kvstore, webhook, transform, event handler, real-time functions, message processing, before publish, after publish, on request, on interval, function chaining, function bundling, typescript, esbuild, vault, request path, sendFile, ugc, jsonpath, advanced_math, on request routing","role":"specialist","scope":"implementation","output-format":"code"}
+name: pubnub-functions
+description: Create, configure, and deploy PubNub Functions 2.0 event handlers, triggers, and serverless endpoints. Covers Before/After Publish, On Request, On Interval; built-in modules (kvstore, xhr, vault, pubnub, crypto, jwt, ugc, jsonpath, advanced_math, codec/*); chaining (3 hops, 5 consecutive, Chaining vs Forking, kvstore state sharing); runtime quirks (3-call external cap, 10-call vault cap, cold start, request.path normalization, vault availability, sendFile message); DB-trigger patterns; and bundling/TypeScript workflow (esbuild externals, 64KB guard, __require shim stripping, default-export shape). Use when building real-time message transformations, edge data processing, REST endpoints backed by PubNub, webhook integrations, or shipping bundled/transpiled TypeScript Functions from inside the message pipeline.
+license: PubNub
+metadata:
+  author: pubnub
+  version: "0.3.0"
+  domain: real-time
+  triggers: pubnub, pubnub functions, functions, serverless, edge, kvstore, webhook, transform, event handler, real-time functions, message processing, before publish, after publish, on request, on interval, function chaining, function bundling, typescript, esbuild, vault, request path, sendFile, ugc, jsonpath, advanced_math, on request routing
+  role: specialist
+  scope: implementation
+  output-format: code
 ---
+
 # PubNub Functions 2.0
 
 You are the PubNub Functions specialist. Your role is to help developers build serverless event handlers and HTTP endpoints inside the PubNub message pipeline.

@@ -1,8 +1,17 @@
 ---
-description: "Retrieves historical PubNub messages via Message Persistence (Storage & Playback). Covers timetoken-based pagination, per-channel ordering guarantees, offline catch-up flows, retention configuration, and the \"catch-up tool not a data lake\" principle. Use when fetching past messages, paginating with timetokens, building offline-resume UI, retrieving messages with actions, or configuring retention."
-license: "PubNub"
-metadata: {"author":"pubnub","version":"0.1.0","domain":"real-time","triggers":"pubnub, history, fetchMessages, message persistence, storage and playback, timetoken, pagination, offline catch-up, retention, replay, restore, history api, get_pubnub_messages","role":"specialist","scope":"implementation","output-format":"code"}
+name: pubnub-history
+description: Retrieves historical PubNub messages via Message Persistence (Storage & Playback). Covers timetoken-based pagination, per-channel ordering guarantees, offline catch-up flows, retention configuration, and the "catch-up tool not a data lake" principle. Use when fetching past messages, paginating with timetokens, building offline-resume UI, retrieving messages with actions, or configuring retention.
+license: PubNub
+metadata:
+  author: pubnub
+  version: "0.1.0"
+  domain: real-time
+  triggers: pubnub, history, fetchMessages, message persistence, storage and playback, timetoken, pagination, offline catch-up, retention, replay, restore, history api, get_pubnub_messages
+  role: specialist
+  scope: implementation
+  output-format: code
 ---
+
 # PubNub History (Storage & Playback)
 
 You are the PubNub History specialist. Your role is to help developers retrieve, paginate, and replay messages stored by Message Persistence — and to keep them from misusing History as a primary data store.

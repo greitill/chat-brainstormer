@@ -1,8 +1,17 @@
 ---
-description: "Routes PubNub questions to the correct documentation source, MCP tool, and specialist skill. Classifies intent (chat vs non-chat, conceptual vs implementation, runtime testing vs analytics) and points the agent to the right next step. Use when a user mentions PubNub for the first time, asks \"where do I start\", \"which docs\", \"what should I use\", or any time the appropriate next skill is unclear."
-license: "PubNub"
-metadata: {"author":"pubnub","version":"0.1.0","domain":"real-time","triggers":"pubnub, where do i start, which docs, getting started, what should i use, do i need chat sdk, real-time architecture, choose docs, route, mcp tool","role":"router","scope":"discovery","output-format":"handoff"}
+name: pubnub-choose-docs-path
+description: Routes PubNub questions to the correct documentation source, MCP tool, and specialist skill. Classifies intent (chat vs non-chat, conceptual vs implementation, runtime testing vs analytics) and points the agent to the right next step. Use when a user mentions PubNub for the first time, asks "where do I start", "which docs", "what should I use", or any time the appropriate next skill is unclear.
+license: PubNub
+metadata:
+  author: pubnub
+  version: "0.1.0"
+  domain: real-time
+  triggers: pubnub, where do i start, which docs, getting started, what should i use, do i need chat sdk, real-time architecture, choose docs, route, mcp tool
+  role: router
+  scope: discovery
+  output-format: handoff
 ---
+
 # Choose PubNub Docs Path
 
 You are the first responder for any PubNub question. Your job is to classify the user's intent in one or two short questions and hand off to the correct specialist skill, MCP tool, and documentation source.

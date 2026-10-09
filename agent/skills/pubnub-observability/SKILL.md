@@ -1,8 +1,17 @@
 ---
-description: "Logging, testing, cost hygiene, incident triage, and usage metrics for PubNub apps. Covers the correlation fields every send/receive must log, the test pyramid for real-time apps, payload + fan-out cost hygiene, the incident triage runbook, and PubNub usage metrics for billing reconciliation. Use during code reviews, when planning monitoring, when triaging incidents, or when investigating PubNub cost overruns."
-license: "PubNub"
-metadata: {"author":"pubnub","version":"0.1.0","domain":"real-time","triggers":"pubnub, logging, monitoring, observability, correlation, test plan, load test, cost, billing, transaction count, runbook, incident, payload size, fan-out, usage metric, get_pubnub_usage_metrics","role":"specialist","scope":"implementation","output-format":"code"}
+name: pubnub-observability
+description: Logging, testing, cost hygiene, incident triage, and usage metrics for PubNub apps. Covers the correlation fields every send/receive must log, the test pyramid for real-time apps, payload + fan-out cost hygiene, the incident triage runbook, and PubNub usage metrics for billing reconciliation. Use during code reviews, when planning monitoring, when triaging incidents, or when investigating PubNub cost overruns.
+license: PubNub
+metadata:
+  author: pubnub
+  version: "0.1.0"
+  domain: real-time
+  triggers: pubnub, logging, monitoring, observability, correlation, test plan, load test, cost, billing, transaction count, runbook, incident, payload size, fan-out, usage metric, get_pubnub_usage_metrics
+  role: specialist
+  scope: implementation
+  output-format: code
 ---
+
 # PubNub Observability
 
 You are the PubNub observability specialist. Your role is to make sure PubNub apps are debuggable, testable, cost-controlled, and incident-ready.
