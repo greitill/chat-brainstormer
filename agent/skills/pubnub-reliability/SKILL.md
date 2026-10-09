@@ -1,11 +1,25 @@
 ---
-description: "Cross-cutting reliability patterns for PubNub apps. Covers reconnect with exponential backoff + jitter, idempotent publish with client-generated message IDs, dedup-on-merge for live + history streams, queue-and-retry for offline writes, and schema versioning of message envelopes. Use during design reviews, when planning offline support, or during incident response when network or delivery reliability is the concern."
-license: "PubNub"
-metadata: {"author":"pubnub","version":"0.1.0","domain":"real-time","triggers":"pubnub, reliability, retry, backoff, jitter, idempotent, dedup, deduplication, queue, schema version, message envelope, exponential backoff, offline, reconnect strategy","role":"specialist","scope":"implementation","output-format":"code"}
+name: pubnub-reliability
+description: Cross-cutting reliability patterns for PubNub apps. Covers reconnect with exponential backoff + jitter, idempotent publish with client-generated message IDs, dedup-on-merge for live + history streams, queue-and-retry for offline writes, and schema versioning of message envelopes. Use during design reviews, when planning offline support, or during incident response when network or delivery reliability is the concern.
+license: PubNub
+metadata:
+  author: pubnub
+  version: "0.1.0"
+  domain: real-time
+  triggers: pubnub, reliability, retry, backoff, jitter, idempotent, dedup, deduplication, queue, schema version, message envelope, exponential backoff, offline, reconnect strategy
+  role: specialist
+  scope: implementation
+  output-format: code
 ---
+
 # PubNub Reliability Patterns
 
 You are the PubNub reliability specialist. Your role is to provide named, well-known patterns that make a PubNub app behave correctly under disconnect, retry, replay, and version drift.
+
+> **Precedence:** PubNub MCP tools and pubnub.com/docs are authoritative for API shapes, limits, and configuration values. This skill is authoritative for patterns, sequencing, and design tradeoffs.
+
+> **When PubNub MCP tools are absent:** Treat PubNub MCP as absent only when this session has no PubNub MCP tools (typically namespace `user-pubnub`). Do not ask the user to check MCP if those tools are already listed. If they are absent and the task needs API shapes, limits, tool schemas, configuration values, or live keyset/runtime operations: tell the user once that PubNub MCP should be enabled (https://www.pubnub.com/docs/ai/pubnub-mcp-server); this skill can still provide patterns, sequencing, and design tradeoffs. Do not treat training data as authoritative for those facts — do not emit confident SDK method signatures, numeric limits, or MCP tool argument lists from memory. Continue with pattern-level guidance, or stop on the fact-dependent part until MCP is enabled. Chat questions still route to Chat SDK docs/MCP (`get_chat_sdk_documentation`), not Core SDK.
+
 
 ## When to Use This Skill
 
@@ -81,7 +95,7 @@ This skill is design-and-pattern oriented. No MCP tool is required for the patte
 
 ## See Also
 
-- **pubnub-app-developer** — for the underlying [`new PubNub` initialization](../pubnub-app-developer/references/sdk-patterns.md), [`pubnub.publish` and `pubnub.subscribe` mechanics](../pubnub-app-developer/references/publish-subscribe.md)
+- **pubnub-app-developer** — for the underlying [`new PubNub` initialization](../pubnub-app-developer/SKILL.md), [`pubnub.publish` and `pubnub.subscribe` mechanics](../pubnub-app-developer/SKILL.md)
 - **pubnub-history** — [dedup-on-merge](../pubnub-reliability/references/dedup-on-merge.md) goes hand in hand with [history fetch + live merge](../pubnub-history/references/offline-catch-up.md)
 - **pubnub-presence** — [`PNNetworkDownCategory` / `PNReconnectedCategory`](../pubnub-presence/references/dropped-connections.md) drives backoff state
 - **pubnub-functions** — server-side idempotency check via a [Function](../pubnub-functions/references/functions-basics.md) that consults [KV Store](../pubnub-functions/references/functions-modules.md)

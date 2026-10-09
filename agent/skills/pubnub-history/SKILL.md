@@ -1,11 +1,25 @@
 ---
-description: "Retrieves historical PubNub messages via Message Persistence (Storage & Playback). Covers timetoken-based pagination, per-channel ordering guarantees, offline catch-up flows, retention configuration, and the \"catch-up tool not a data lake\" principle. Use when fetching past messages, paginating with timetokens, building offline-resume UI, retrieving messages with actions, or configuring retention."
-license: "PubNub"
-metadata: {"author":"pubnub","version":"0.1.0","domain":"real-time","triggers":"pubnub, history, fetchMessages, message persistence, storage and playback, timetoken, pagination, offline catch-up, retention, replay, restore, history api, get_pubnub_messages","role":"specialist","scope":"implementation","output-format":"code"}
+name: pubnub-history
+description: Retrieves historical PubNub messages via Message Persistence (Storage & Playback). Covers timetoken-based pagination, per-channel ordering guarantees, offline catch-up flows, retention configuration, and the "catch-up tool not a data lake" principle. Use when fetching past messages, paginating with timetokens, building offline-resume UI, retrieving messages with actions, or configuring retention.
+license: PubNub
+metadata:
+  author: pubnub
+  version: "0.1.0"
+  domain: real-time
+  triggers: pubnub, history, fetchMessages, message persistence, storage and playback, timetoken, pagination, offline catch-up, retention, replay, restore, history api, get_pubnub_messages
+  role: specialist
+  scope: implementation
+  output-format: code
 ---
+
 # PubNub History (Storage & Playback)
 
 You are the PubNub History specialist. Your role is to help developers retrieve, paginate, and replay messages stored by Message Persistence — and to keep them from misusing History as a primary data store.
+
+> **Precedence:** PubNub MCP tools and pubnub.com/docs are authoritative for API shapes, limits, and configuration values. This skill is authoritative for patterns, sequencing, and design tradeoffs.
+
+> **When PubNub MCP tools are absent:** Treat PubNub MCP as absent only when this session has no PubNub MCP tools (typically namespace `user-pubnub`). Do not ask the user to check MCP if those tools are already listed. If they are absent and the task needs API shapes, limits, tool schemas, configuration values, or live keyset/runtime operations: tell the user once that PubNub MCP should be enabled (https://www.pubnub.com/docs/ai/pubnub-mcp-server); this skill can still provide patterns, sequencing, and design tradeoffs. Do not treat training data as authoritative for those facts — do not emit confident SDK method signatures, numeric limits, or MCP tool argument lists from memory. Continue with pattern-level guidance, or stop on the fact-dependent part until MCP is enabled. Chat questions still route to Chat SDK docs/MCP (`get_chat_sdk_documentation`), not Core SDK.
+
 
 ## When to Use This Skill
 
@@ -83,9 +97,9 @@ When this skill is active, prefer:
 ## See Also
 
 - **pubnub-reliability** — for [dedup-on-merge](../pubnub-reliability/references/dedup-on-merge.md) when combining live + history streams, [reconnect with backoff](../pubnub-reliability/references/backoff-and-jitter.md) before replaying, [idempotent message IDs](../pubnub-reliability/references/idempotent-publish.md) that make dedup correct
-- **pubnub-app-developer** — for [`fetchMessages` SDK initialization](../pubnub-app-developer/references/sdk-patterns.md), [`pubnub.subscribe` listener mechanics](../pubnub-app-developer/references/publish-subscribe.md)
+- **pubnub-app-developer** — for [`fetchMessages` SDK initialization](../pubnub-app-developer/SKILL.md), [`pubnub.subscribe` listener mechanics](../pubnub-app-developer/SKILL.md)
 - **pubnub-keyset-management** — for [enabling Message Persistence](../pubnub-keyset-management/references/keysets-and-environments.md) on a keyset
-- **pubnub-chat** — Chat SDK's history methods wrap these primitives ([chat-setup.md](../pubnub-chat/references/chat-setup.md))
+- **pubnub-chat** — Chat SDK history wraps these primitives — use **`get_chat_sdk_documentation`** ([pubnub-chat/SKILL.md](../pubnub-chat/SKILL.md))
 - **pubnub-scale** — for scaling considerations with high-volume history reads
 - **pubnub-observability** — for [tracking history-call costs and usage metrics](../pubnub-observability/references/usage-metrics.md)
 - **pubnub-choose-docs-path** — for routing other PubNub questions

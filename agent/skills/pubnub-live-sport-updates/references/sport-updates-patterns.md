@@ -1,15 +1,8 @@
-<!-- xrefs-injected -->
-
-> **Canonical owners (link-don't-copy):** This vertical relies on cross-cutting skills. Always link to the canonical owner instead of duplicating. Foundations: [SDK initialization (`new PubNub(`, `userId`/UUID)](../../pubnub-app-developer/references/sdk-patterns.md), [pub/sub basics (`pubnub.publish(`, `pubnub.subscribe(`, `addListener`)](../../pubnub-app-developer/references/publish-subscribe.md), [channel naming](../../pubnub-app-developer/references/channels.md), [message filters](../../pubnub-app-developer/references/message-filters.md), [SDK upgrades](../../pubnub-app-developer/references/sdk-upgrades.md), [REST API](../../pubnub-app-developer/references/rest-api.md). Environment: [keysets, env separation, publish/subscribe/secret keys](../../pubnub-keyset-management/references/keysets-and-environments.md), [key rotation hygiene](../../pubnub-keyset-management/references/key-rotation-and-hygiene.md), [demo keys](../../pubnub-keyset-management/references/demo-keys.md), [custom origin](../../pubnub-keyset-management/references/custom-origin.md). Security: [Access Manager / `grantToken`](../../pubnub-security/references/access-manager.md), [AES-256 / message encryption](../../pubnub-security/references/encryption.md), [IP allowlisting](../../pubnub-security/references/ip-whitelisting.md), [DoS mitigation](../../pubnub-security/references/dos-mitigation.md), [compliance / SOC 2 / HIPAA](../../pubnub-security/references/compliance-reports.md). Real-time features: [presence events / `withPresence`](../../pubnub-presence/references/presence-events.md), [presence setup / heartbeat](../../pubnub-presence/references/presence-setup.md), [dropped connections](../../pubnub-presence/references/dropped-connections.md), [multi-device sync](../../pubnub-presence/references/multi-device-sync.md). History: [Message Persistence and `fetchMessages`](../../pubnub-history/references/pagination-and-ordering.md), [offline catch-up](../../pubnub-history/references/offline-catch-up.md), [retention](../../pubnub-history/references/retention-and-storage.md). App Context: [users / user metadata](../../pubnub-app-context/references/users.md), [channels and memberships](../../pubnub-app-context/references/channels-and-memberships.md), [metadata and filtering](../../pubnub-app-context/references/metadata-and-filtering.md). Functions: [Before/After Publish, `request.ok()`/`request.abort()`](../../pubnub-functions/references/functions-basics.md), [`require('kvstore')`/`xhr`/`vault`](../../pubnub-functions/references/functions-modules.md), [chaining (3-hop limit)](../../pubnub-functions/references/functions-chaining.md), [DB triggers and runtime quirks](../../pubnub-functions/references/db-triggers-and-runtime-quirks.md), [common patterns](../../pubnub-functions/references/functions-patterns.md). Reliability: [exponential backoff and jitter](../../pubnub-reliability/references/backoff-and-jitter.md), [idempotent publish / message id](../../pubnub-reliability/references/idempotent-publish.md), [dedup on merge](../../pubnub-reliability/references/dedup-on-merge.md), [queue and retry](../../pubnub-reliability/references/queue-and-retry.md), [schema version](../../pubnub-reliability/references/schema-versioning.md). Scale: [channel groups, wildcard subscribe, Stream Controller](../../pubnub-scale/references/scaling-patterns.md), [performance tuning](../../pubnub-scale/references/performance.md), [10K+ live events](../../pubnub-scale/references/large-events.md). Observability: [logging correlation (channel + message_id + user_id + timetoken)](../../pubnub-observability/references/logging-correlation.md), [test pyramid](../../pubnub-observability/references/test-pyramid.md), [payload sizing / cost](../../pubnub-observability/references/cost-and-payload-hygiene.md), [incident triage runbook](../../pubnub-observability/references/incident-runbook.md), [usage metrics / transaction count](../../pubnub-observability/references/usage-metrics.md). Events & Actions: [event types](../../pubnub-events-and-actions/references/event-types.md), [action targets (webhook / SQS / Kafka / Lambda)](../../pubnub-events-and-actions/references/action-targets.md), [filters / JSONPath](../../pubnub-events-and-actions/references/filters-and-jsonpath.md). Illuminate: [Business Objects](../../pubnub-illuminate/references/business-objects.md), [Metrics](../../pubnub-illuminate/references/metrics.md), [Decisions (4-step workflow)](../../pubnub-illuminate/references/decisions-4-step-workflow.md), [Queries](../../pubnub-illuminate/references/queries-adhoc-vs-saved.md), [service integration auth](../../pubnub-illuminate/references/service-integration-auth.md). Chat: [Chat SDK setup](../../pubnub-chat/references/chat-setup.md), [message actions / reactions](../../pubnub-chat/references/message-actions.md), [file sharing / `sendFile`](../../pubnub-chat/references/file-sharing.md), [threading](../../pubnub-chat/references/threading.md). Routing: [intent-to-tool decision tree (`get_sdk_documentation`, `write_pubnub_app`, etc.)](../../pubnub-choose-docs-path/references/intent-to-tool.md).
-
-
 # PubNub Sport Updates Patterns
 
 ## Multi-Sport Dashboard
 
-### Dashboard Architecture
-
-A multi-sport dashboard subscribes to multiple league channels simultaneously and renders a unified view of all active games.
+A multi-sport dashboard subscribes to multiple league channels simultaneously. Render scores in the client; do not keep ticker/sparkline UI in this skill.
 
 ```javascript
 class MultiSportDashboard {
@@ -45,6 +38,7 @@ class MultiSportDashboard {
   }
 
   handleStatus(event) {
+    // S3 owner: backoff-and-jitter; S2 owner: offline-catch-up — refresh all leagues after reconnect
     if (event.category === 'PNReconnectedCategory') this.refreshAllGames();
   }
 
@@ -86,59 +80,17 @@ class MultiSportDashboard {
 }
 ```
 
-### React Dashboard Component
-
-```javascript
-import { useState, useEffect } from 'react';
-
-function SportsDashboard({ pubnub, leagues }) {
-  const [dashboard] = useState(() => new MultiSportDashboard(pubnub));
-  const [games, setGames] = useState(new Map());
-
-  useEffect(() => {
-    dashboard.subscribeToLeagues(leagues);
-    const unsub = dashboard.onUpdate((g) => setGames(new Map(g)));
-    return () => { unsub(); dashboard.destroy(); };
-  }, [dashboard, leagues]);
-
-  return (
-    <div className="dashboard">
-      {leagues.map(league => (
-        <LeagueSection key={league} league={league} games={dashboard.getGamesByLeague(league)} />
-      ))}
-    </div>
-  );
-}
-
-function ScoreCard({ game }) {
-  return (
-    <div className={`score-card status-${game.status}`}>
-      <div className="team away">
-        <span className="name">{game.away?.name}</span>
-        <span className="score">{game.away?.score}</span>
-      </div>
-      <div className="team home">
-        <span className="name">{game.home?.name}</span>
-        <span className="score">{game.home?.score}</span>
-      </div>
-      <div className="game-info">
-        <span className="period">{game.period?.label}</span>
-        {game.period?.clock && <span className="clock">{game.period.clock}</span>}
-      </div>
-    </div>
-  );
-}
-```
-
 ## Fan Engagement Features
+
+Use `sports.<league>.fan_<gameId>` (see [channel hierarchy](sport-updates-setup.md)). The samples below use a four-segment `sports.fan.*` path — that **cannot** be covered by a two-dot wildcard; prefer `sports.<league>.fan_<gameId>` for production.
 
 ### Live Polls
 
 ```javascript
 class GamePoll {
-  constructor(pubnub, gameId) {
+  constructor(pubnub, league, gameId) {
     this.pubnub = pubnub;
-    this.channel = `sports.fan.polls.${gameId}`;
+    this.channel = `sports.${league}.fan_${gameId}`;
   }
 
   async createPoll(poll) {
@@ -168,9 +120,9 @@ class GamePoll {
 
 ```javascript
 class GameReactions {
-  constructor(pubnub, gameId) {
+  constructor(pubnub, league, gameId) {
     this.pubnub = pubnub;
-    this.channel = `sports.fan.reactions.${gameId}`;
+    this.channel = `sports.${league}.fan_${gameId}`;
     this.counts = {};
   }
 
@@ -195,22 +147,6 @@ class GameReactions {
     this.pubnub.subscribe({ channels: [this.channel] });
     return () => { this.pubnub.removeListener(listener); this.pubnub.unsubscribe({ channels: [this.channel] }); };
   }
-}
-```
-
-### Live Predictions
-
-```javascript
-async function submitPrediction(pubnub, gameId, userId, prediction) {
-  await pubnub.publish({
-    channel: `sports.fan.predictions.${gameId}`,
-    message: {
-      type: 'prediction',
-      gameId, userId,
-      prediction: { winner: prediction.winner, finalScore: prediction.finalScore, mvp: prediction.mvp },
-      timestamp: Date.now()
-    }
-  });
 }
 ```
 
@@ -245,24 +181,11 @@ class FanPreferences {
   }
 
   subscribeToFavorites() {
-    const channels = this.favorites.flatMap(fav => [
-      `sports.${fav.league}.teams.${fav.teamId}`,
-      `sports.${fav.league}.teams.${fav.teamId}.*`
-    ]);
+    const channels = this.favorites.map(fav => `sports.${fav.league}.team_${fav.teamId}`);
     this.pubnub.subscribe({ channels });
     return channels;
   }
 }
-
-// Usage
-const prefs = new FanPreferences(pubnub, 'fan-user-123');
-await prefs.loadPreferences();
-await prefs.savePreferences([
-  { league: 'nfl', teamId: 'SF' },
-  { league: 'nba', teamId: 'GSW' },
-  { league: 'epl', teamId: 'ARS' }
-]);
-prefs.subscribeToFavorites();
 ```
 
 ## Push Notifications for Key Events
@@ -271,7 +194,7 @@ prefs.subscribeToFavorites();
 
 ```javascript
 async function registerForPush(pubnub, deviceToken, platform, favoriteTeams) {
-  const channels = favoriteTeams.map(fav => `sports.${fav.league}.teams.${fav.teamId}`);
+  const channels = favoriteTeams.map(fav => `sports.${fav.league}.team_${fav.teamId}`);
 
   if (platform === 'ios') {
     await pubnub.push.addChannels({
@@ -289,7 +212,7 @@ async function registerForPush(pubnub, deviceToken, platform, favoriteTeams) {
 ```javascript
 function buildPushPayload(event) {
   const title = `${event.score.away.team} ${event.score.away.score} - ${event.score.home.team} ${event.score.home.score}`;
-  const body = getPushBody(event);
+  const body = event.payload?.description || event.type;
 
   return {
     pn_apns: {
@@ -301,19 +224,6 @@ function buildPushPayload(event) {
       data: { gameId: event.gameId, type: event.type }
     }
   };
-}
-
-function getPushBody(event) {
-  switch (event.type) {
-    case 'goal': return `GOAL! ${event.payload.scorer} scores for ${event.payload.team}`;
-    case 'touchdown': return `TOUCHDOWN! ${event.payload.player} - ${event.payload.description}`;
-    case 'home_run': return `HOME RUN! ${event.payload.batter} - ${event.payload.description}`;
-    case 'game_status':
-      if (event.payload.status === 'final') return 'FINAL';
-      if (event.payload.status === 'in_progress') return 'Game has started!';
-      return event.payload.statusMessage;
-    default: return event.payload?.description || '';
-  }
 }
 
 async function publishWithPush(pubnub, channel, event) {
@@ -332,6 +242,8 @@ async function publishWithPush(pubnub, channel, event) {
 | League score channel | Very High | Low | Score tickers, league overviews |
 | PubNub Functions filter | Medium | Medium (+50ms) | Personalized filtering |
 | Delta compression | Very High | Low | High-frequency stat updates |
+
+Also see [S4 large events](../../pubnub-scale/references/large-events.md) for league-wide fan-out.
 
 ### PubNub Functions for Event Enrichment
 
@@ -355,44 +267,11 @@ export default (request) => {
 
 ### Delta Compression for High-Frequency Updates
 
-```javascript
-class DeltaCompressor {
-  constructor() { this.lastPublished = new Map(); }
-
-  computeDelta(gameId, fullState) {
-    const previous = this.lastPublished.get(gameId);
-    if (!previous) { this.lastPublished.set(gameId, { ...fullState }); return { type: 'full_state', ...fullState }; }
-
-    const delta = { type: 'delta', gameId, sequence: fullState.sequence, changes: {} };
-    let hasChanges = false;
-    for (const key of Object.keys(fullState)) {
-      if (JSON.stringify(fullState[key]) !== JSON.stringify(previous[key])) {
-        delta.changes[key] = fullState[key];
-        hasChanges = true;
-      }
-    }
-    if (hasChanges) { this.lastPublished.set(gameId, { ...fullState }); return delta; }
-    return null;
-  }
-}
-
-class DeltaApplier {
-  constructor() { this.gameStates = new Map(); }
-
-  apply(message) {
-    if (message.type === 'full_state') { this.gameStates.set(message.gameId, message); return message; }
-    if (message.type === 'delta') {
-      const current = this.gameStates.get(message.gameId) || {};
-      const updated = { ...current, ...message.changes, sequence: message.sequence };
-      this.gameStates.set(message.gameId, updated);
-      return updated;
-    }
-    return message;
-  }
-}
-```
+Use the canonical [delta / sequence state-sync pattern](../../pubnub-multiplayer-gaming/references/gaming-state-sync.md#delta-updates) for compute-and-apply deltas. **Sport-specific:** compress scoreboard fields (team scores, clock, period) and tag each publish with a per-game monotonic `sequence` for gap detection.
 
 ## Historical Data and Replay
+
+Both patterns below use the canonical [offline catch-up pattern (S2)](../../pubnub-history/references/offline-catch-up.md) — `fetchMessages` for the game channel, sorted by sequence, with sport-specific replay / aggregation logic as the delta.
 
 ### Game Replay from History
 
@@ -424,9 +303,7 @@ async function buildGameSummary(pubnub, league, gameId) {
   const messages = (response.channels[channel] || []).map(e => e.message);
 
   const finalScore = messages.filter(m => m.type === 'score_update').sort((a, b) => b.sequence - a.sequence)[0];
-  const scoringPlays = messages.filter(m =>
-    ['touchdown', 'field_goal', 'goal', 'home_run', 'run_scored', 'three_pointer', 'dunk'].includes(m.type)
-  );
+  const scoringPlays = messages.filter(m => m.type === 'play_by_play' && m.payload?.scoring);
 
   return {
     gameId, league,
@@ -440,39 +317,7 @@ async function buildGameSummary(pubnub, league, gameId) {
 
 ### Graceful Degradation
 
-```javascript
-class ResilientSportsClient {
-  constructor(pubnub) {
-    this.pubnub = pubnub;
-    this.isConnected = false;
-    this.reconnectAttempts = 0;
-
-    this.pubnub.addListener({
-      status: (event) => {
-        switch (event.category) {
-          case 'PNConnectedCategory':
-            this.isConnected = true;
-            this.reconnectAttempts = 0;
-            break;
-          case 'PNNetworkDownCategory':
-            this.isConnected = false;
-            break;
-          case 'PNReconnectedCategory':
-            this.isConnected = true;
-            this.reconnectAttempts = 0;
-            break;
-          case 'PNNetworkIssuesCategory':
-            this.reconnectAttempts++;
-            if (this.reconnectAttempts >= 10) {
-              console.warn('Unable to connect. Scores may be delayed.');
-            }
-            break;
-        }
-      }
-    });
-  }
-}
-```
+Wire status categories per [backoff-and-jitter (S3)](../../pubnub-reliability/references/backoff-and-jitter.md) and [dropped-connections](../../pubnub-presence/references/dropped-connections.md). **Sport-specific:** track `isConnected` / reconnect attempts; after repeated `PNNetworkIssuesCategory`, show “Scores may be delayed” instead of a hard error.
 
 ## Best Practices
 

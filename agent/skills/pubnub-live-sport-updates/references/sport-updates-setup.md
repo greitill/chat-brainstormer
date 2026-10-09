@@ -1,30 +1,8 @@
-<!-- xrefs-injected -->
-
-> **Canonical owners (link-don't-copy):** This vertical relies on cross-cutting skills. Always link to the canonical owner instead of duplicating. Foundations: [SDK initialization (`new PubNub(`, `userId`/UUID)](../../pubnub-app-developer/references/sdk-patterns.md), [pub/sub basics (`pubnub.publish(`, `pubnub.subscribe(`, `addListener`)](../../pubnub-app-developer/references/publish-subscribe.md), [channel naming](../../pubnub-app-developer/references/channels.md), [message filters](../../pubnub-app-developer/references/message-filters.md), [SDK upgrades](../../pubnub-app-developer/references/sdk-upgrades.md), [REST API](../../pubnub-app-developer/references/rest-api.md). Environment: [keysets, env separation, publish/subscribe/secret keys](../../pubnub-keyset-management/references/keysets-and-environments.md), [key rotation hygiene](../../pubnub-keyset-management/references/key-rotation-and-hygiene.md), [demo keys](../../pubnub-keyset-management/references/demo-keys.md), [custom origin](../../pubnub-keyset-management/references/custom-origin.md). Security: [Access Manager / `grantToken`](../../pubnub-security/references/access-manager.md), [AES-256 / message encryption](../../pubnub-security/references/encryption.md), [IP allowlisting](../../pubnub-security/references/ip-whitelisting.md), [DoS mitigation](../../pubnub-security/references/dos-mitigation.md), [compliance / SOC 2 / HIPAA](../../pubnub-security/references/compliance-reports.md). Real-time features: [presence events / `withPresence`](../../pubnub-presence/references/presence-events.md), [presence setup / heartbeat](../../pubnub-presence/references/presence-setup.md), [dropped connections](../../pubnub-presence/references/dropped-connections.md), [multi-device sync](../../pubnub-presence/references/multi-device-sync.md). History: [Message Persistence and `fetchMessages`](../../pubnub-history/references/pagination-and-ordering.md), [offline catch-up](../../pubnub-history/references/offline-catch-up.md), [retention](../../pubnub-history/references/retention-and-storage.md). App Context: [users / user metadata](../../pubnub-app-context/references/users.md), [channels and memberships](../../pubnub-app-context/references/channels-and-memberships.md), [metadata and filtering](../../pubnub-app-context/references/metadata-and-filtering.md). Functions: [Before/After Publish, `request.ok()`/`request.abort()`](../../pubnub-functions/references/functions-basics.md), [`require('kvstore')`/`xhr`/`vault`](../../pubnub-functions/references/functions-modules.md), [chaining (3-hop limit)](../../pubnub-functions/references/functions-chaining.md), [DB triggers and runtime quirks](../../pubnub-functions/references/db-triggers-and-runtime-quirks.md), [common patterns](../../pubnub-functions/references/functions-patterns.md). Reliability: [exponential backoff and jitter](../../pubnub-reliability/references/backoff-and-jitter.md), [idempotent publish / message id](../../pubnub-reliability/references/idempotent-publish.md), [dedup on merge](../../pubnub-reliability/references/dedup-on-merge.md), [queue and retry](../../pubnub-reliability/references/queue-and-retry.md), [schema version](../../pubnub-reliability/references/schema-versioning.md). Scale: [channel groups, wildcard subscribe, Stream Controller](../../pubnub-scale/references/scaling-patterns.md), [performance tuning](../../pubnub-scale/references/performance.md), [10K+ live events](../../pubnub-scale/references/large-events.md). Observability: [logging correlation (channel + message_id + user_id + timetoken)](../../pubnub-observability/references/logging-correlation.md), [test pyramid](../../pubnub-observability/references/test-pyramid.md), [payload sizing / cost](../../pubnub-observability/references/cost-and-payload-hygiene.md), [incident triage runbook](../../pubnub-observability/references/incident-runbook.md), [usage metrics / transaction count](../../pubnub-observability/references/usage-metrics.md). Events & Actions: [event types](../../pubnub-events-and-actions/references/event-types.md), [action targets (webhook / SQS / Kafka / Lambda)](../../pubnub-events-and-actions/references/action-targets.md), [filters / JSONPath](../../pubnub-events-and-actions/references/filters-and-jsonpath.md). Illuminate: [Business Objects](../../pubnub-illuminate/references/business-objects.md), [Metrics](../../pubnub-illuminate/references/metrics.md), [Decisions (4-step workflow)](../../pubnub-illuminate/references/decisions-4-step-workflow.md), [Queries](../../pubnub-illuminate/references/queries-adhoc-vs-saved.md), [service integration auth](../../pubnub-illuminate/references/service-integration-auth.md). Chat: [Chat SDK setup](../../pubnub-chat/references/chat-setup.md), [message actions / reactions](../../pubnub-chat/references/message-actions.md), [file sharing / `sendFile`](../../pubnub-chat/references/file-sharing.md), [threading](../../pubnub-chat/references/threading.md). Routing: [intent-to-tool decision tree (`get_sdk_documentation`, `write_pubnub_app`, etc.)](../../pubnub-choose-docs-path/references/intent-to-tool.md).
-
-
 # PubNub Live Sport Updates Setup
-
-## Installation
-
-### JavaScript/TypeScript
-
-```bash
-npm install pubnub
-# or
-yarn add pubnub
-```
-
-### Prerequisites
-
-- Node.js >= 16.0.0
-- Publish and Subscribe keys from PubNub Admin Portal
-- **Message Persistence** enabled for historical score lookups
-- **Stream Controller** enabled for wildcard subscriptions
 
 ## SDK Initialization
 
-### Score Ingestion Service (Server-Side)
+One JavaScript publisher is enough here. Pull other-language constructors via **`get_sdk_documentation`**.
 
 ```javascript
 import PubNub from 'pubnub';
@@ -37,55 +15,13 @@ const pubnub = new PubNub({
 });
 ```
 
-### Client Application (Browser/Mobile)
-
-```javascript
-import PubNub from 'pubnub';
-
-const pubnub = new PubNub({
-  subscribeKey: 'sub-c-...',
-  userId: `fan-${currentUserId}`,
-  restore: true,           // Reconnect and catch up on missed messages
-  autoNetworkDetection: true,
-  heartbeatInterval: 30
-});
-```
-
-### React Integration
-
-```javascript
-import { useState, useEffect } from 'react';
-import PubNub from 'pubnub';
-
-function SportsApp({ userId }) {
-  const [pubnub, setPubnub] = useState(null);
-
-  useEffect(() => {
-    const pn = new PubNub({
-      subscribeKey: process.env.REACT_APP_PUBNUB_SUB_KEY,
-      userId: `fan-${userId}`,
-      restore: true,
-      autoNetworkDetection: true
-    });
-    setPubnub(pn);
-
-    return () => {
-      pn.unsubscribeAll();
-      pn.destroy();
-    };
-  }, [userId]);
-
-  if (!pubnub) return <div>Loading...</div>;
-  return <ScoreboardDashboard pubnub={pubnub} />;
-}
-```
+Clients should omit `secretKey`, set `restore: true`, and treat themselves as subscribe-only.
 
 ## Channel Hierarchy
 
-> **Hard limit:** PubNub channel names support a maximum of **3 dot-separated levels (`a.b.c`)**.  
-> `sports.<league>.games.<gameId>` is **4 levels and invalid**. All channel patterns below are designed to stay within 3 levels.
+> **Wildcard Subscribe constraint:** Wildcard patterns are limited to **two dots** (`sports.*` or `sports.nba.*`, not `sports.nba.games.*`). Plain channel names are **not** capped at three segments — but if you rely on wildcards, design names so a valid pattern covers your leaves.
 
-The channel naming convention follows a 3-level dot-delimited hierarchy: `sports.<league>.<segment>`.
+The channel naming convention uses a dot-delimited hierarchy. When wildcards are required, prefer three-segment leaves under a two-dot pattern (e.g. `sports.<league>.<segment>` with `sports.<league>.*`). For deeper paths like `sports.<league>.games.<gameId>`, use explicit subscribe, channel groups, or encode extra dimensions in the segment (`plays_<gameId>`).
 
 ### Channel Naming Pattern
 
@@ -157,6 +93,8 @@ pubnub.subscribe({
 
 ### Universal Game State
 
+Keep a compact envelope. Do not embed sport-rule encyclopedias (down-and-distance, inning lines, goal lists) in the skill — put those fields in your ingestion mapper.
+
 ```javascript
 const gameState = {
   gameId: 'string',           // Unique game identifier
@@ -168,63 +106,13 @@ const gameState = {
   away: { team: 'string', name: 'string', score: 'number' },
   period: {
     current: 'number',        // Period number (1-based)
-    label: 'string',          // Display label (Q1, 1st Half, Top 3rd)
-    clock: 'string'           // Game clock (mm:ss or empty)
+    label: 'string',          // Display label from the provider feed
+    clock: 'string'           // Game clock from the provider feed
   }
 };
 ```
 
-### NFL Score Model
-
-```javascript
-const nflScore = {
-  sport: 'nfl',
-  period: { current: 3, label: 'Q3', clock: '07:42' },
-  home: { team: 'SF', name: '49ers', score: 21 },
-  away: { team: 'SEA', name: 'Seahawks', score: 14 },
-  scoring: { home: { q1: 7, q2: 7, q3: 7, q4: 0 }, away: { q1: 0, q2: 7, q3: 7, q4: 0 } },
-  possession: 'SF',
-  down: 2,
-  yardsToGo: 7,
-  yardLine: 'SEA 35'
-};
-```
-
-### Soccer Score Model
-
-```javascript
-const soccerScore = {
-  sport: 'epl',
-  period: { current: 2, label: '2nd Half', clock: '72:15' },
-  home: { team: 'ARS', name: 'Arsenal', score: 2 },
-  away: { team: 'CHE', name: 'Chelsea', score: 1 },
-  goals: [
-    { team: 'ARS', player: 'B. Saka', minute: 23, type: 'open_play' },
-    { team: 'CHE', player: 'C. Palmer', minute: 41, type: 'penalty' },
-    { team: 'ARS', player: 'K. Havertz', minute: 68, type: 'header' }
-  ],
-  cards: { home: { yellow: 1, red: 0 }, away: { yellow: 2, red: 0 } }
-};
-```
-
-### MLB Score Model
-
-```javascript
-const mlbScore = {
-  sport: 'mlb',
-  period: { current: 7, label: 'Bot 7th', clock: '' },
-  home: { team: 'NYY', name: 'Yankees', score: 5 },
-  away: { team: 'BOS', name: 'Red Sox', score: 3 },
-  inningScores: {
-    home: [0, 1, 0, 2, 0, 0, 2, null, null],
-    away: [1, 0, 0, 0, 2, 0, 0, null, null]
-  },
-  count: { balls: 2, strikes: 1, outs: 1 },
-  bases: { first: true, second: false, third: true }
-};
-```
-
-## Data Ingestion from Sports Providers
+## Publishing Score Updates
 
 ```javascript
 class SportDataIngestionService {
@@ -249,7 +137,6 @@ class SportDataIngestionService {
       message: { type: 'score_update', sequence, timestamp: Date.now(), ...game }
     });
 
-    // Also publish summary to league scores channel
     await this.pubnub.publish({
       channel: `sports.${game.league}.scores`,
       message: {
@@ -261,23 +148,6 @@ class SportDataIngestionService {
         period: game.period
       }
     });
-  }
-
-  normalizeEvent(rawEvent) {
-    return {
-      gameId: rawEvent.id,
-      league: rawEvent.sport_code.toLowerCase(),
-      sport: rawEvent.sport_code.toLowerCase(),
-      status: this.mapStatus(rawEvent.state),
-      home: { team: rawEvent.home_team.abbreviation, name: rawEvent.home_team.name, score: rawEvent.home_score },
-      away: { team: rawEvent.away_team.abbreviation, name: rawEvent.away_team.name, score: rawEvent.away_score },
-      period: { current: rawEvent.period, label: rawEvent.period_label, clock: rawEvent.clock || '' }
-    };
-  }
-
-  mapStatus(providerStatus) {
-    const statusMap = { 'scheduled': 'pre_game', 'in_progress': 'in_progress', 'halftime': 'halftime', 'delayed': 'delayed', 'final': 'final' };
-    return statusMap[providerStatus] || 'unknown';
   }
 }
 ```
@@ -302,11 +172,8 @@ function subscribeToGame(pubnub, league, gameId, handlers) {
         case 'game_status': handlers.onStatusChange?.(event.message); break;
       }
     },
-    status: (event) => {
-      if (event.category === 'PNReconnectedCategory') {
-        fetchMissedUpdates(pubnub, channels, handlers);
-      }
-    }
+    // Reconnect: wire status per [S3 backoff-and-jitter](../../pubnub-reliability/references/backoff-and-jitter.md);
+    // on reconnect run [S2 offline catch-up](../../pubnub-history/references/offline-catch-up.md) — see Reconnection section below.
   };
 
   pubnub.addListener(listener);
@@ -321,49 +188,7 @@ function subscribeToGame(pubnub, league, gameId, handlers) {
 
 ### Reconnection and Catch-Up
 
-```javascript
-async function fetchMissedUpdates(pubnub, channels, handlers) {
-  for (const channel of channels) {
-    try {
-      const response = await pubnub.fetchMessages({ channels: [channel], count: 25 });
-      const messages = response.channels[channel] || [];
-      for (const entry of messages) {
-        if (entry.message.type === 'score_update') {
-          handlers.onScoreUpdate?.(entry.message);
-        }
-      }
-    } catch (error) {
-      console.error(`Failed to fetch missed updates for ${channel}:`, error);
-    }
-  }
-}
-```
-
-## Mobile SDK Initialization
-
-### Swift (iOS)
-
-```swift
-import PubNub
-
-let config = PubNubConfiguration(
-    publishKey: "pub-c-...",
-    subscribeKey: "sub-c-...",
-    userId: "fan-ios-\(userId)"
-)
-let pubnub = PubNub(configuration: config)
-pubnub.subscribe(to: ["sports.nfl.*"])
-```
-
-### Kotlin (Android)
-
-```kotlin
-val config = PNConfiguration(UserId("fan-android-$userId")).apply {
-    subscribeKey = "sub-c-..."
-}
-val pubnub = PubNub.create(config)
-pubnub.subscribe(channels = listOf("sports.nfl.*"))
-```
+Follow [offline catch-up](../../pubnub-history/references/offline-catch-up.md) with [dedup-on-merge](../../pubnub-reliability/references/dedup-on-merge.md). **Sport-specific:** after reconnect, fetch missed messages for the game channels and dispatch `score_update` / `play_by_play` / `game_status` to the same handlers — dedupe by `gameId + sequence`.
 
 ## Required Keyset Settings
 
@@ -380,7 +205,7 @@ pubnub.subscribe(channels = listOf("sports.nfl.*"))
 1. **Channel granularity** - Use separate channels for scores, play-by-play, and fan engagement so clients subscribe only to what they render
 2. **Compact payloads** - Keep real-time messages under 2 KB; use abbreviations and codes rather than full names
 3. **Sequence numbers** - Always include a per-game monotonic sequence so clients detect gaps and request backfill
-4. **Reconnection** - Enable `restore: true` and `autoNetworkDetection: true`; fetch missed messages on reconnect
+4. **Reconnection** — Enable `restore: true` and `autoNetworkDetection: true`; on `PNReconnectedCategory` run [offline catch-up](../../pubnub-history/references/offline-catch-up.md) (see Reconnection section above)
 5. **Wildcard subscriptions** - Design channel names to support wildcards at meaningful boundaries (league, team, game)
 6. **Access control** - Use Access Manager to restrict publish rights to your ingestion service; clients should be subscribe-only
 7. **Idempotent processing** - Clients should deduplicate by gameId + sequence to handle redelivery gracefully
