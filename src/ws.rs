@@ -117,18 +117,11 @@ async fn handle_socket(socket: WebSocket, state: Arc<AppState>) {
                 let _ = state.tx.send(ServerEvent::Rooms {
                     rooms: state.list_rooms(),
                 });
-                if let Some(prev) = current_room.take() {
-                    state.leave_room(&prev, &user_id);
-                }
-                match state.join_room(&info.slug, &user_id, &display_name).await {
-                    Ok((room, history, online)) => {
+                match state.join_room(&info.slug, &user_id, &display_name) {
+                    Ok(room) => {
                         current_room = Some(room.slug.clone());
                         *active_room.lock().await = Some(room.slug.clone());
-                        let _ = client_tx.send(ServerEvent::RoomJoined {
-                            room,
-                            history,
-                            online,
-                        });
+                        let _ = client_tx.send(ServerEvent::RoomJoined { room });
                     }
                     Err(message) => {
                         let _ = client_tx.send(ServerEvent::Error { message });
@@ -136,18 +129,11 @@ async fn handle_socket(socket: WebSocket, state: Arc<AppState>) {
                 }
             }
             ClientEvent::JoinRoom { room } => {
-                if let Some(prev) = current_room.take() {
-                    state.leave_room(&prev, &user_id);
-                }
-                match state.join_room(&room, &user_id, &display_name).await {
-                    Ok((room, history, online)) => {
+                match state.join_room(&room, &user_id, &display_name) {
+                    Ok(room) => {
                         current_room = Some(room.slug.clone());
                         *active_room.lock().await = Some(room.slug.clone());
-                        let _ = client_tx.send(ServerEvent::RoomJoined {
-                            room,
-                            history,
-                            online,
-                        });
+                        let _ = client_tx.send(ServerEvent::RoomJoined { room });
                     }
                     Err(message) => {
                         let _ = client_tx.send(ServerEvent::Error { message });
@@ -155,7 +141,6 @@ async fn handle_socket(socket: WebSocket, state: Arc<AppState>) {
                 }
             }
             ClientEvent::LeaveRoom { room } => {
-                state.leave_room(&room, &user_id);
                 if current_room.as_deref() == Some(room.as_str()) {
                     current_room = None;
                     *active_room.lock().await = None;
@@ -199,29 +184,9 @@ async fn handle_socket(socket: WebSocket, state: Arc<AppState>) {
                     let _ = client_tx.send(ServerEvent::Error { message });
                 }
             }
-            ClientEvent::LoadHistory { room } => {
-                if let Some(info) = state.room_info(&room) {
-                    match state.rest.fetch_history(&info.channel, 40).await {
-                        Ok(history) => {
-                            let online = state.online_users(&room);
-                            let _ = client_tx.send(ServerEvent::RoomJoined {
-                                room: info,
-                                history,
-                                online,
-                            });
-                        }
-                        Err(message) => {
-                            let _ = client_tx.send(ServerEvent::Error { message });
-                        }
-                    }
-                }
-            }
         }
     }
 
-    if let Some(room) = current_room {
-        state.leave_room(&room, &user_id);
-    }
     send_task.abort();
 }
 
@@ -259,7 +224,6 @@ fn should_forward(event: &ServerEvent, room: Option<&str>) -> bool {
         ServerEvent::Rooms { .. } => true,
         ServerEvent::Message { room: r, .. }
         | ServerEvent::Typing { room: r, .. }
-        | ServerEvent::Presence { room: r, .. }
         | ServerEvent::Reaction { room: r, .. }
         | ServerEvent::ReadReceipt { room: r, .. }
         | ServerEvent::MessageDeleted { room: r, .. }
@@ -283,7 +247,6 @@ mod tests {
                 channel: format!("probability-amplifier.room.{name}"),
                 name: name.to_string(),
                 topic: String::new(),
-                members: 0,
             }],
         }
     }

@@ -2,18 +2,14 @@ use crate::config::Config;
 use crate::llm;
 use crate::models::{
     avatar_initials, default_avatar_color, is_room_channel, room_channel, room_slug_from_channel,
-    sanitize_avatar_color, slugify, ChatEnvelope, ChatMessage, OnlineUser, RoomInfo, ServerEvent,
-    UserProfile,
+    sanitize_avatar_color, slugify, ChatEnvelope, ChatMessage, RoomInfo, ServerEvent, UserProfile,
 };
 use crate::rest::PubNubRest;
 use dashmap::DashMap;
 use futures::StreamExt;
 use pubnub::access::permissions;
 use pubnub::dx::subscribe::Update;
-use pubnub::subscribe::{
-    EventEmitter, EventSubscriber, MessageActionEvent, Presence, SubscriptionOptions,
-    SubscriptionParams,
-};
+use pubnub::subscribe::{EventEmitter, EventSubscriber, MessageActionEvent, SubscriptionParams};
 use pubnub::{Keyset, PubNubClient, PubNubClientBuilder};
 use serde_json::json;
 use std::collections::{HashMap, HashSet};
@@ -32,6 +28,9 @@ const TOKEN_TTL_MINUTES: usize = 60;
 const TOKEN_REFRESH_MARGIN_MINUTES: usize = 15;
 /// Backoff between failed re-grants, while the current token is still valid.
 const TOKEN_RETRY_SECS: u64 = 60;
+/// How many live messages Analyze can see. This process keeps them in memory;
+/// nothing is read back from Message Persistence.
+const LIVE_TRANSCRIPT_CAP: usize = 50;
 
 #[derive(Clone)]
 pub struct AppState {
@@ -44,6 +43,8 @@ pub struct AppState {
     pub names: Arc<DashMap<String, String>>,
     /// In-memory cache of App Context profiles (initials + color).
     pub profiles: Arc<DashMap<String, UserProfile>>,
+    /// Messages observed on the live subscribe stream since this process started.
+    transcripts: Arc<DashMap<String, Vec<ChatMessage>>>,
 }
 
 #[derive(Debug, Clone)]
@@ -52,7 +53,6 @@ pub struct RoomState {
     pub channel: String,
     pub name: String,
     pub topic: String,
-    pub members: HashSet<String>,
 }
 
 impl AppState {
@@ -73,8 +73,6 @@ impl AppState {
                 secret_key: None,
             })
             .with_user_id(HUB_USER_ID)
-            .with_heartbeat_value(60)
-            .with_heartbeat_interval(20)
             .build()?;
 
         if let Some(token) = &auth_token {
@@ -82,7 +80,7 @@ impl AppState {
             tracing::info!("Access Manager token applied to hub client");
         }
 
-        // Headroom for typing/presence bursts so slow clients rarely lag at all.
+        // Headroom for typing bursts so slow clients rarely lag at all.
         let (tx, _) = broadcast::channel(4096);
         let rest = PubNubRest::new(
             config.publish_key.clone(),
@@ -100,6 +98,7 @@ impl AppState {
             tx,
             names: Arc::new(DashMap::new()),
             profiles: Arc::new(DashMap::new()),
+            transcripts: Arc::new(DashMap::new()),
         };
 
         // Defaults always present in-memory; App Context may override name/topic.
@@ -128,8 +127,8 @@ impl AppState {
         Ok(state)
     }
 
-    /// Apply a token to both PubNub surfaces: the SDK client (subscribe, publish,
-    /// presence) and the REST helpers (history, signals, actions, App Context).
+    /// Apply a token to both PubNub surfaces: the SDK client (subscribe, publish)
+    /// and the REST helpers (signals, actions, App Context).
     fn apply_token(&self, token: String) {
         self.client.set_token(token.clone());
         self.rest.set_auth_token(Some(token));
@@ -212,7 +211,6 @@ impl AppState {
                     channel: channel.clone(),
                     name: name.to_string(),
                     topic: topic.to_string(),
-                    members: HashSet::new(),
                 });
         }
 
@@ -341,7 +339,6 @@ impl AppState {
             channel: r.channel.clone(),
             name: r.name.clone(),
             topic: r.topic.clone(),
-            members: r.members.len(),
         })
     }
 
@@ -354,7 +351,6 @@ impl AppState {
                 channel: r.channel.clone(),
                 name: r.name.clone(),
                 topic: r.topic.clone(),
-                members: r.members.len(),
             })
             .collect();
         rooms.sort_by(|a, b| a.name.cmp(&b.name));
@@ -370,14 +366,14 @@ impl AppState {
         let subscription = self.client.subscription(SubscriptionParams {
             channels: Some(&[channel]),
             channel_groups: None,
-            options: Some(vec![SubscriptionOptions::ReceivePresenceEvents]),
+            options: None,
         });
         subscription.subscribe();
 
         let tx = self.tx.clone();
         let names = self.names.clone();
-        let profiles = self.profiles.clone();
         let rooms = self.rooms.clone();
+        let transcripts = self.transcripts.clone();
 
         tokio::spawn(async move {
             subscription
@@ -385,8 +381,8 @@ impl AppState {
                 .for_each(|event| {
                     let tx = tx.clone();
                     let names = names.clone();
-                    let profiles = profiles.clone();
                     let rooms = rooms.clone();
+                    let transcripts = transcripts.clone();
                     async move {
                         match event {
                             Update::Message(message) => {
@@ -397,15 +393,17 @@ impl AppState {
                                             .find(|r| r.channel == message.channel)
                                             .map(|r| r.slug.clone())
                                             .unwrap_or_else(|| envelope.room.clone());
+                                        let chat_message = ChatMessage {
+                                            timetoken: message.timestamp.to_string(),
+                                            envelope,
+                                            reactions: HashMap::new(),
+                                            readers: Vec::new(),
+                                            edited: false,
+                                        };
+                                        remember_live_message(&transcripts, &room, &chat_message);
                                         let _ = tx.send(ServerEvent::Message {
                                             room,
-                                            message: ChatMessage {
-                                                timetoken: message.timestamp.to_string(),
-                                                envelope,
-                                                reactions: HashMap::new(),
-                                                readers: Vec::new(),
-                                                edited: false,
-                                            },
+                                            message: chat_message,
                                         });
                                     }
                                     Err(err) => {
@@ -486,40 +484,33 @@ impl AppState {
                                     "edited"
                                         if !matches!(action.event, MessageActionEvent::Delete) =>
                                     {
+                                        revise_live_message(
+                                            &transcripts,
+                                            &room,
+                                            &action.message_timetoken,
+                                            &action.value,
+                                        );
                                         let _ = tx.send(ServerEvent::MessageEdited {
                                             room,
                                             message_timetoken: action.message_timetoken,
                                             text: action.value,
                                         });
                                     }
-                                    // Moderation tools (BizOps) soft-delete: the
-                                    // message stays in history carrying this action.
+                                    // Moderation tools (BizOps) soft-delete via a message action.
                                     "deleted"
                                         if !matches!(action.event, MessageActionEvent::Delete) =>
                                     {
+                                        forget_live_message(
+                                            &transcripts,
+                                            &room,
+                                            &action.message_timetoken,
+                                        );
                                         let _ = tx.send(ServerEvent::MessageDeleted {
                                             room,
                                             message_timetoken: action.message_timetoken,
                                         });
                                     }
                                     _ => {}
-                                }
-                            }
-                            Update::Presence(presence) => {
-                                let channel = match &presence {
-                                    Presence::Join { channel, .. }
-                                    | Presence::Leave { channel, .. }
-                                    | Presence::Timeout { channel, .. }
-                                    | Presence::Interval { channel, .. }
-                                    | Presence::StateChange { channel, .. } => channel.clone(),
-                                };
-                                let room = rooms
-                                    .iter()
-                                    .find(|r| r.channel == channel)
-                                    .map(|r| r.slug.clone());
-                                if let Some(room) = room {
-                                    let online = online_users_for(&rooms, &names, &profiles, &room);
-                                    let _ = tx.send(ServerEvent::Presence { room, online });
                                 }
                             }
                             _ => {}
@@ -577,50 +568,16 @@ impl AppState {
             })
     }
 
-    pub async fn join_room(
+    pub fn join_room(
         &self,
         slug: &str,
         user_id: &str,
         display_name: &str,
-    ) -> Result<(RoomInfo, Vec<ChatMessage>, Vec<OnlineUser>), String> {
+    ) -> Result<RoomInfo, String> {
         self.names
             .insert(user_id.to_string(), display_name.to_string());
-        let info = self
-            .room_info(slug)
-            .ok_or_else(|| format!("Unknown room '{slug}'"))?;
-
-        if let Some(mut room) = self.rooms.get_mut(slug) {
-            room.members.insert(user_id.to_string());
-        }
-
-        let history = self
-            .rest
-            .fetch_history(&info.channel, 40)
-            .await
-            .unwrap_or_default();
-        let online = self.online_users(slug);
-
-        let _ = self.tx.send(ServerEvent::Presence {
-            room: slug.to_string(),
-            online: online.clone(),
-        });
-
-        Ok((info, history, online))
-    }
-
-    pub fn leave_room(&self, slug: &str, user_id: &str) {
-        if let Some(mut room) = self.rooms.get_mut(slug) {
-            room.members.remove(user_id);
-        }
-        let online = self.online_users(slug);
-        let _ = self.tx.send(ServerEvent::Presence {
-            room: slug.to_string(),
-            online,
-        });
-    }
-
-    pub fn online_users(&self, slug: &str) -> Vec<OnlineUser> {
-        online_users_for(&self.rooms, &self.names, &self.profiles, slug)
+        self.room_info(slug)
+            .ok_or_else(|| format!("Unknown room '{slug}'"))
     }
 
     pub async fn publish_chat(
@@ -648,7 +605,8 @@ impl AppState {
         self.client
             .publish_message(envelope)
             .channel(channel)
-            .store(true)
+            // Live delivery only. This build does not write Message Persistence.
+            .store(false)
             // GET carries the payload in the URL, so anything but a short message
             // comes back as 414 Request URI Too Long.
             .use_post(true)
@@ -708,14 +666,13 @@ impl AppState {
         user_id: &str,
         display_name: &str,
     ) -> Result<(), String> {
-        let channel = self
-            .rooms
+        self.channel_for(room_slug)?;
+        let seen: Vec<ChatMessage> = self
+            .transcripts
             .get(room_slug)
-            .ok_or_else(|| format!("Unknown room '{room_slug}'"))?
-            .channel
-            .clone();
-        let history = self.rest.fetch_history(&channel, 50).await?;
-        let analysis = llm::analyze_room(&self.config, room_slug, &history).await;
+            .map(|messages| messages.clone())
+            .unwrap_or_default();
+        let analysis = llm::analyze_room(&self.config, room_slug, &seen).await;
         let _ = self.tx.send(ServerEvent::Analysis {
             room: room_slug.to_string(),
             analysis: analysis.clone(),
@@ -767,7 +724,8 @@ async fn grant_hub_token(
         .with_user_id(HUB_USER_ID)
         .build()?;
 
-    // Cover chat channels (+ presence *-pnpres) and App Context UUID + channel metadata.
+    // Chat channels and App Context UUID + channel metadata.
+    // No presence `join` grant: this build does not subscribe to `-pnpres`.
     // Channel pattern get/update covers Objects channel metadata for probability-amplifier.room.*.
     // No authorized_user_id: hub REST calls attach end-user uuids for
     // reactions/typing/receipts while still using this server token.
@@ -776,7 +734,6 @@ async fn grant_hub_token(
             .read()
             .write()
             .get()
-            .join()
             .manage()
             .update()
             .delete(),
@@ -810,45 +767,48 @@ fn room_fingerprint(rooms: &DashMap<String, RoomState>) -> Vec<(String, String, 
     rows
 }
 
-fn online_users_for(
-    rooms: &DashMap<String, RoomState>,
-    names: &DashMap<String, String>,
-    profiles: &DashMap<String, UserProfile>,
-    slug: &str,
-) -> Vec<OnlineUser> {
-    let mut users: Vec<OnlineUser> = rooms
-        .get(slug)
-        .map(|room| {
-            room.members
-                .iter()
-                .map(|user_id| {
-                    if let Some(p) = profiles.get(user_id) {
-                        OnlineUser {
-                            user_id: user_id.clone(),
-                            display_name: p.display_name.clone(),
-                            avatar_initials: p.avatar_initials.clone(),
-                            avatar_color: p.avatar_color.clone(),
-                        }
-                    } else {
-                        let display_name = names
-                            .get(user_id)
-                            .map(|n| n.clone())
-                            .unwrap_or_else(|| user_id.clone());
-                        OnlineUser {
-                            user_id: user_id.clone(),
-                            display_name: display_name.clone(),
-                            avatar_initials: avatar_initials(&display_name),
-                            avatar_color: default_avatar_color(),
-                        }
-                    }
-                })
-                .collect()
-        })
-        .unwrap_or_default();
-    users.sort_by(|a, b| {
-        a.display_name
-            .to_lowercase()
-            .cmp(&b.display_name.to_lowercase())
-    });
-    users
+fn remember_live_message(
+    transcripts: &DashMap<String, Vec<ChatMessage>>,
+    room: &str,
+    message: &ChatMessage,
+) {
+    let mut messages = transcripts.entry(room.to_string()).or_default();
+    if messages
+        .iter()
+        .any(|existing| existing.timetoken == message.timetoken)
+    {
+        return;
+    }
+    messages.push(message.clone());
+    let overflow = messages.len().saturating_sub(LIVE_TRANSCRIPT_CAP);
+    if overflow > 0 {
+        messages.drain(0..overflow);
+    }
+}
+
+fn revise_live_message(
+    transcripts: &DashMap<String, Vec<ChatMessage>>,
+    room: &str,
+    timetoken: &str,
+    text: &str,
+) {
+    let Some(mut messages) = transcripts.get_mut(room) else {
+        return;
+    };
+    let Some(message) = messages.iter_mut().find(|m| m.timetoken == timetoken) else {
+        return;
+    };
+    message.envelope.set_text(text);
+    message.edited = true;
+}
+
+fn forget_live_message(
+    transcripts: &DashMap<String, Vec<ChatMessage>>,
+    room: &str,
+    timetoken: &str,
+) {
+    let Some(mut messages) = transcripts.get_mut(room) else {
+        return;
+    };
+    messages.retain(|message| message.timetoken != timetoken);
 }

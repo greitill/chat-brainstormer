@@ -186,67 +186,8 @@ button:hover:not(:disabled) { background: var(--accent-deep); }
 
 .chat {
   display: grid;
-  grid-template-rows: auto auto 1fr auto auto;
+  grid-template-rows: auto 1fr auto auto auto;
   overflow: hidden;
-}
-
-.online-panel {
-  display: flex;
-  gap: 0.75rem;
-  align-items: center;
-  padding: 0.65rem 1.1rem;
-  border-bottom: 1px solid var(--line);
-  background: rgba(255, 255, 255, 0.35);
-}
-.online-panel h3 {
-  margin: 0;
-  font-family: var(--font-display);
-  font-size: 0.95rem;
-  font-weight: 600;
-  white-space: nowrap;
-}
-.online-list {
-  list-style: none;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.4rem;
-  margin: 0;
-  padding: 0;
-  min-width: 0;
-}
-.online-list li {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  padding: 0.28rem 0.65rem;
-  border-radius: 999px;
-  background: rgba(15, 122, 95, 0.12);
-  border: 1px solid rgba(15, 122, 95, 0.18);
-  font-size: 0.82rem;
-  font-weight: 600;
-}
-.online-list li.empty {
-  background: transparent;
-  border: 0;
-  color: var(--ink-soft);
-  font-weight: 500;
-  padding-left: 0;
-}
-.online-list li.me {
-  background: rgba(207, 107, 36, 0.14);
-  border-color: rgba(207, 107, 36, 0.28);
-}
-.online-list .dot {
-  width: 0.45rem;
-  height: 0.45rem;
-  border-radius: 50%;
-  background: var(--accent);
-  flex-shrink: 0;
-}
-.online-list .avatar {
-  width: 1.35rem;
-  height: 1.35rem;
-  font-size: 0.58rem;
 }
 .chat-head, .actions {
   display: flex;
@@ -265,13 +206,6 @@ button:hover:not(:disabled) { background: var(--accent-deep); }
 }
 .meta, .hint, .typing { color: var(--ink-soft); font-size: 0.9rem; }
 .meta { margin: 0.2rem 0 0; }
-.pill {
-  display: inline-flex;
-  padding: 0.35rem 0.7rem;
-  border-radius: 999px;
-  background: rgba(15,122,95,0.12);
-  font-size: 0.82rem;
-}
 
 .messages {
   overflow: auto;

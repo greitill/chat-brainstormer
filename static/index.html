@@ -12,7 +12,7 @@
     <section id="gate" class="gate">
       <p class="brand">Realtime Brainstorm Helper</p>
       <p class="version">Probability Amplifier · v2 · Rust + PubNub Core SDK</p>
-      <h1>Multiple rooms. History. Typing. Reads. Reactions. LLM analysis.</h1>
+      <h1>Multiple rooms. Typing. Reads. Reactions. LLM analysis.</h1>
       <form id="hello-form">
         <label>
           Your name
@@ -46,16 +46,9 @@
             <p id="room-meta" class="meta"></p>
           </div>
           <div class="actions">
-            <span id="presence" class="pill">0 online</span>
             <button id="analyze" type="button" disabled>Analyze</button>
           </div>
         </header>
-        <div class="online-panel">
-          <h3>Online</h3>
-          <ul id="online-list" class="online-list">
-            <li class="empty">No one in this room yet</li>
-          </ul>
-        </div>
         <div id="messages" class="messages"></div>
         <p id="typing" class="typing"></p>
         <p id="status" class="status" role="status" aria-live="polite"></p>
@@ -67,7 +60,7 @@
 
       <aside class="analysis">
         <h2>LLM analysis</h2>
-        <p class="hint">Uses OpenAI when <code>OPENAI_API_KEY</code> is set; otherwise local heuristics.</p>
+        <p class="hint">Summarizes messages seen live since this server started. Uses OpenAI when <code>OPENAI_API_KEY</code> is set; otherwise local heuristics.</p>
         <div id="analysis-body" class="analysis-body empty">Join a room and run analysis.</div>
       </aside>
     </main>

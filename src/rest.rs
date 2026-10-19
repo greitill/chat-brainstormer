@@ -1,13 +1,10 @@
-use crate::models::{
-    avatar_initials, default_avatar_color, ChatEnvelope, ChatMessage, UserProfile,
-};
+use crate::models::{avatar_initials, default_avatar_color, UserProfile};
 use base64::engine::general_purpose::URL_SAFE_NO_PAD;
 use base64::Engine as _;
 use hmac::{Hmac, Mac};
 use reqwest::{Client, StatusCode};
 use serde_json::{json, Value};
 use sha2::Sha256;
-use std::collections::HashMap;
 use std::sync::{Arc, RwLock};
 
 /// Requesting UUID for Objects REST (PAM token is unbound to a user).
@@ -44,7 +41,7 @@ pub struct ChannelMetadata {
 }
 
 /// Thin REST helpers for APIs not exposed by the Rust Core SDK yet
-/// (history, signals, message actions, App Context user/channel metadata).
+/// (signals, message actions, App Context user/channel metadata).
 #[derive(Clone)]
 pub struct PubNubRest {
     http: Client,
@@ -117,94 +114,6 @@ impl PubNubRest {
             "https://ps.pndsn.com{path}?{query}&signature={}",
             encode(&signature)
         ))
-    }
-
-    pub async fn fetch_history(
-        &self,
-        channel: &str,
-        count: u32,
-    ) -> Result<Vec<ChatMessage>, String> {
-        // Actions (reactions, receipts, moderation soft-deletes) are only returned by
-        // the `history-with-actions` path — plain `/v3/history` ignores
-        // `include_message_actions` and answers without an `actions` field. That path
-        // is single-channel and caps at 25 messages.
-        let max = count.min(25);
-        let url = self.with_auth(format!(
-            "https://ps.pndsn.com/v3/history-with-actions/sub-key/{}/channel/{}?max={max}&include_meta=true&include_uuid=true&include_message_type=true",
-            self.subscribe_key,
-            encode(channel),
-        ));
-
-        let body: Value = self
-            .http
-            .get(url)
-            .send()
-            .await
-            .map_err(|e| e.to_string())?
-            .json()
-            .await
-            .map_err(|e| e.to_string())?;
-
-        let mut out = Vec::new();
-        let channels = match body.get("channels").and_then(|c| c.as_object()) {
-            Some(channels) => channels.clone(),
-            None => {
-                // Don't fail silently into the actionless v2 fallback.
-                tracing::warn!("history-with-actions returned no channels for {channel}: {body}");
-                Default::default()
-            }
-        };
-
-        for (_ch, messages) in channels {
-            let Some(arr) = messages.as_array() else {
-                continue;
-            };
-            for item in arr {
-                if let Some(msg) = parse_history_item(item) {
-                    out.push(msg);
-                }
-            }
-        }
-
-        // Fallback to v2 history if v3 empty/unavailable
-        if out.is_empty() {
-            out = self.fetch_history_v2(channel, count).await?;
-        }
-
-        out.sort_by(|a, b| a.timetoken.cmp(&b.timetoken));
-        Ok(out)
-    }
-
-    async fn fetch_history_v2(
-        &self,
-        channel: &str,
-        count: u32,
-    ) -> Result<Vec<ChatMessage>, String> {
-        let url = self.with_auth(format!(
-            "https://ps.pndsn.com/v2/history/sub-key/{}/channel/{}?count={}&include_token=true&include_meta=true&reverse=false",
-            self.subscribe_key,
-            encode(channel),
-            count
-        ));
-        let body: Value = self
-            .http
-            .get(url)
-            .send()
-            .await
-            .map_err(|e| e.to_string())?
-            .json()
-            .await
-            .map_err(|e| e.to_string())?;
-
-        let mut out = Vec::new();
-        if let Some(arr) = body.get(0).and_then(|v| v.as_array()) {
-            for item in arr {
-                if let Some(msg) = parse_v2_history_item(item) {
-                    out.push(msg);
-                }
-            }
-        }
-        Ok(out)
     }
 
     pub async fn send_signal(
@@ -521,199 +430,9 @@ fn signature_v2(secret_key: &str, publish_key: &str, path: &str, query: &str) ->
     format!("v2.{}", URL_SAFE_NO_PAD.encode(mac.finalize().into_bytes()))
 }
 
-fn parse_history_item(item: &Value) -> Option<ChatMessage> {
-    // v3 may return timetoken as string or number depending on endpoint/version
-    let timetoken = item.get("timetoken").and_then(|t| {
-        t.as_str()
-            .map(str::to_string)
-            .or_else(|| t.as_u64().map(|n| n.to_string()))
-            .or_else(|| t.as_i64().map(|n| n.to_string()))
-    })?;
-    let message = item.get("message")?;
-    let mut envelope = envelope_from_value(message)?;
-    let mut reactions: HashMap<String, Vec<String>> = HashMap::new();
-    let mut readers = Vec::new();
-    let mut edited = false;
-
-    if let Some(actions) = item.get("actions").and_then(|a| a.as_object()) {
-        // Soft deletes stay in Message Persistence carrying a `deleted` action, so
-        // history has to drop them or moderated messages reappear on every join.
-        if actions.contains_key("deleted") {
-            return None;
-        }
-        // An edit is an `edited` action whose *value* is the replacement text; the
-        // stored payload never changes, so history has to re-apply the newest one.
-        if let Some(edits) = actions.get("edited").and_then(|e| e.as_object()) {
-            if let Some(text) = newest_action_value(edits) {
-                envelope.set_text(text);
-                edited = true;
-            }
-        }
-        if let Some(reaction_map) = actions.get("reaction").and_then(|r| r.as_object()) {
-            for (emoji, entries) in reaction_map {
-                let users = entries
-                    .as_array()
-                    .into_iter()
-                    .flatten()
-                    .filter_map(|e| e.get("uuid").and_then(|u| u.as_str()).map(str::to_string))
-                    .collect();
-                reactions.insert(emoji.clone(), users);
-            }
-        }
-        if let Some(receipt_map) = actions.get("receipt").and_then(|r| r.as_object()) {
-            if let Some(entries) = receipt_map.get("read").and_then(|r| r.as_array()) {
-                readers = entries
-                    .iter()
-                    .filter_map(|e| e.get("uuid").and_then(|u| u.as_str()).map(str::to_string))
-                    .collect();
-            }
-        }
-    }
-
-    Some(ChatMessage {
-        timetoken,
-        envelope,
-        reactions,
-        readers,
-        edited,
-    })
-}
-
-/// Value of the most recently added action in an `actions[type]` map.
-///
-/// Timetokens are digit strings, so compare by length first — plain lexical order
-/// would rank a shorter (older) token above a longer one.
-fn newest_action_value(entries: &serde_json::Map<String, Value>) -> Option<String> {
-    entries
-        .iter()
-        .filter_map(|(value, list)| {
-            let newest = list
-                .as_array()?
-                .iter()
-                .filter_map(|e| e.get("actionTimetoken").and_then(|t| t.as_str()))
-                .max_by_key(|tt| (tt.len(), *tt))?;
-            Some((newest.to_string(), value.clone()))
-        })
-        .max_by_key(|(tt, _)| (tt.len(), tt.clone()))
-        .map(|(_, value)| value)
-}
-
-fn parse_v2_history_item(item: &Value) -> Option<ChatMessage> {
-    // [message, timetoken] or {message, timetoken, meta, uuid}
-    if let Some(arr) = item.as_array() {
-        let message = arr.first()?;
-        let timetoken = arr
-            .get(1)?
-            .as_u64()
-            .map(|n| n.to_string())
-            .or_else(|| arr.get(1)?.as_str().map(str::to_string))?;
-        let envelope = envelope_from_value(message)?;
-        return Some(ChatMessage {
-            timetoken,
-            envelope,
-            reactions: HashMap::new(),
-            readers: Vec::new(),
-            edited: false,
-        });
-    }
-
-    let timetoken = item.get("timetoken").and_then(|t| {
-        t.as_u64()
-            .map(|n| n.to_string())
-            .or_else(|| t.as_str().map(str::to_string))
-    })?;
-    let message = item.get("message")?;
-    let envelope = envelope_from_value(message)?;
-    Some(ChatMessage {
-        timetoken,
-        envelope,
-        reactions: HashMap::new(),
-        readers: Vec::new(),
-        edited: false,
-    })
-}
-
-fn envelope_from_value(message: &Value) -> Option<ChatEnvelope> {
-    if let Ok(env) = serde_json::from_value::<ChatEnvelope>(message.clone()) {
-        return Some(env);
-    }
-    if let Some(text) = message.as_str() {
-        return Some(ChatEnvelope {
-            schema: 1,
-            id: uuid::Uuid::new_v4().to_string(),
-            kind: "chat".into(),
-            text: text.to_string(),
-            author_id: "unknown".into(),
-            author_name: "unknown".into(),
-            room: String::new(),
-            avatar_initials: "?".into(),
-            avatar_color: default_avatar_color(),
-        });
-    }
-    None
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    fn history_item(actions: Value) -> Value {
-        json!({
-            "timetoken": "17869721963917581",
-            "message": { "schema": 1, "id": "m1", "type": "chat", "text": "original",
-                         "author_id": "u1", "author_name": "U", "room": "r" },
-            "actions": actions,
-        })
-    }
-
-    /// Several edits of the same message coexist as separate keys, so the newest
-    /// `actionTimetoken` decides which text is current — not map order.
-    #[test]
-    fn newest_edit_wins_over_earlier_ones() {
-        let item = history_item(json!({
-            "edited": {
-                "second edit": [{ "uuid": "mod", "actionTimetoken": "17869769448849472" }],
-                "third edit":  [{ "uuid": "mod", "actionTimetoken": "17869769448849999" }],
-                "first edit":  [{ "uuid": "mod", "actionTimetoken": "17869769448849000" }],
-            }
-        }));
-
-        let parsed = parse_history_item(&item).expect("message parses");
-        assert_eq!("third edit", parsed.envelope.text());
-        assert!(parsed.edited);
-    }
-
-    /// A shorter timetoken is an older one; lexical comparison alone would rank
-    /// "9..." above "17..." and resurrect a stale edit.
-    #[test]
-    fn edit_ordering_compares_numerically_not_lexically() {
-        let item = history_item(json!({
-            "edited": {
-                "old": [{ "uuid": "mod", "actionTimetoken": "9999999999999999" }],
-                "new": [{ "uuid": "mod", "actionTimetoken": "17869769448849472" }],
-            }
-        }));
-
-        assert_eq!("new", parse_history_item(&item).unwrap().envelope.text());
-    }
-
-    /// A soft-deleted message must not reach the client even if it was also edited.
-    #[test]
-    fn deleted_beats_edited() {
-        let item = history_item(json!({
-            "deleted": { "deleted": [{ "uuid": "mod", "actionTimetoken": "17869769271764946" }] },
-            "edited": { "new text": [{ "uuid": "mod", "actionTimetoken": "17869769448849472" }] },
-        }));
-
-        assert!(parse_history_item(&item).is_none());
-    }
-
-    #[test]
-    fn message_without_actions_is_not_marked_edited() {
-        let parsed = parse_history_item(&history_item(json!({}))).unwrap();
-        assert_eq!("original", parsed.envelope.text());
-        assert!(!parsed.edited);
-    }
 
     /// Vector taken from the vendored SDK's own signature test so our
     /// hand-rolled signing stays byte-compatible with PubNub's implementation.

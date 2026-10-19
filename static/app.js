@@ -41,7 +41,6 @@ const state = {
   currentRoom: null,
   messages: new Map(),
   typing: new Map(),
-  online: [],
   // Room slug of an in-flight analysis, or null when idle.
   analyzing: null,
 };
@@ -58,8 +57,6 @@ const els = {
   createRoom: document.getElementById('create-room'),
   roomTitle: document.getElementById('room-title'),
   roomMeta: document.getElementById('room-meta'),
-  presence: document.getElementById('presence'),
-  onlineList: document.getElementById('online-list'),
   analyze: document.getElementById('analyze'),
   messages: document.getElementById('messages'),
   typing: document.getElementById('typing'),
@@ -120,13 +117,8 @@ function handleServer(msg) {
       break;
     case 'room_joined':
       state.currentRoom = msg.room.slug;
-      state.messages = new Map(
-        msg.history.map((m) => {
-          m.timetoken = String(m.timetoken);
-          return [m.timetoken, m];
-        }),
-      );
-      state.online = msg.online || [];
+      state.messages = new Map();
+      state.typing = new Map();
       els.roomTitle.textContent = msg.room.name;
       els.roomMeta.textContent = `${msg.room.topic} · ${msg.room.channel}`;
       els.messageInput.disabled = false;
@@ -137,15 +129,6 @@ function handleServer(msg) {
       syncAnalyzeButton();
       renderRooms();
       renderMessages();
-      renderOnline();
-      if (msg.history.length) {
-        const last = msg.history[msg.history.length - 1];
-        send({
-          event: 'read',
-          room: msg.room.slug,
-          message_timetoken: last.timetoken,
-        });
-      }
       break;
     case 'message': {
       if (msg.room !== state.currentRoom) break;
@@ -170,11 +153,6 @@ function handleServer(msg) {
       if (msg.typing) state.typing.set(msg.user_id, msg.display_name);
       else state.typing.delete(msg.user_id);
       renderTyping();
-      break;
-    case 'presence':
-      if (msg.room !== state.currentRoom) break;
-      state.online = msg.online || [];
-      renderOnline();
       break;
     case 'reaction':
       if (msg.room !== state.currentRoom) break;
@@ -264,7 +242,7 @@ function renderRooms() {
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.className = room.slug === state.currentRoom ? 'active' : '';
-    btn.innerHTML = `<strong>${escapeHtml(room.name)}</strong><span class="topic">${escapeHtml(room.topic)} · ${room.members} in room</span>`;
+    btn.innerHTML = `<strong>${escapeHtml(room.name)}</strong><span class="topic">${escapeHtml(room.topic)}</span>`;
     btn.onclick = () => send({ event: 'join_room', room: room.slug });
     li.appendChild(btn);
     els.roomList.appendChild(li);
@@ -376,36 +354,6 @@ function renderTyping() {
     : '';
 }
 
-function renderOnline() {
-  const online = state.online || [];
-  els.presence.textContent = `${online.length} online`;
-  els.onlineList.innerHTML = '';
-
-  if (!online.length) {
-    const empty = document.createElement('li');
-    empty.className = 'empty';
-    empty.textContent = 'No one in this room yet';
-    els.onlineList.appendChild(empty);
-    return;
-  }
-
-  for (const user of online) {
-    const li = document.createElement('li');
-    if (user.user_id === state.userId) li.classList.add('me');
-    const initials = user.avatar_initials || avatarInitials(user.display_name);
-    const color = user.avatar_color || DEFAULT_AVATAR_COLOR;
-    li.appendChild(avatarEl(initials, color, 'sm'));
-    li.appendChild(
-      document.createTextNode(
-        user.user_id === state.userId
-          ? `${user.display_name} (you)`
-          : user.display_name,
-      ),
-    );
-    els.onlineList.appendChild(li);
-  }
-}
-
 // The server answers an analyze request with either an `analysis` or an `error`,
 // but neither arrives if the socket drops or the user leaves the room first
 // (`should_forward` only delivers `analysis` to the room it belongs to), so the
@@ -441,7 +389,7 @@ function renderAnalysisPending(roomName) {
       <span class="spinner" aria-hidden="true"></span>
       Analyzing ${escapeHtml(roomName)}…
     </p>
-    <p class="hint">Reading recent messages and summarizing.</p>
+    <p class="hint">Summarizing messages from this server session.</p>
   `;
 }
 

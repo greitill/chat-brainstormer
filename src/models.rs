@@ -185,7 +185,7 @@ pub struct ChatMessage {
 pub enum ClientEvent {
     Hello {
         display_name: String,
-        /// Stable client identity so history keeps aligning to "mine" on re-entry.
+        /// Stable client identity so reactions and receipts stay aligned across reloads.
         #[serde(default)]
         user_id: Option<String>,
         /// Chosen at gate; stored in PubNub App Context custom fields.
@@ -223,9 +223,6 @@ pub enum ClientEvent {
     Analyze {
         room: String,
     },
-    LoadHistory {
-        room: String,
-    },
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -242,8 +239,6 @@ pub enum ServerEvent {
     },
     RoomJoined {
         room: RoomInfo,
-        history: Vec<ChatMessage>,
-        online: Vec<OnlineUser>,
     },
     Message {
         room: String,
@@ -254,10 +249,6 @@ pub enum ServerEvent {
         user_id: String,
         display_name: String,
         typing: bool,
-    },
-    Presence {
-        room: String,
-        online: Vec<OnlineUser>,
     },
     Reaction {
         room: String,
@@ -272,14 +263,14 @@ pub enum ServerEvent {
         user_id: String,
         display_name: String,
     },
-    /// A message was soft-deleted (moderation / BizOps), which PubNub reports as a
-    /// `deleted` message action rather than removing it from Message Persistence.
+    /// A message was soft-deleted (moderation / BizOps), reported as a `deleted`
+    /// message action.
     MessageDeleted {
         room: String,
         message_timetoken: String,
     },
     /// A message's text was replaced via an `edited` action; the published payload
-    /// in history is unchanged.
+    /// is unchanged.
     MessageEdited {
         room: String,
         message_timetoken: String,
@@ -300,17 +291,6 @@ pub struct RoomInfo {
     pub channel: String,
     pub name: String,
     pub topic: String,
-    pub members: usize,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct OnlineUser {
-    pub user_id: String,
-    pub display_name: String,
-    #[serde(default)]
-    pub avatar_initials: String,
-    #[serde(default = "default_avatar_color")]
-    pub avatar_color: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

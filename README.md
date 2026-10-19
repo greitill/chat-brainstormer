@@ -3,8 +3,8 @@
 Multi-room brainstorming chat with LLM analysis, built with:
 
 - **Rust** + Axum + WebSockets
-- **PubNub Rust Core SDK 0.8** (vendored + patched in `vendor/pubnub`) for publish / subscribe / presence
-- **PubNub REST** for history, signals (typing), and message actions (reactions + read receipts)
+- **PubNub Rust Core SDK 0.8** (vendored + patched in `vendor/pubnub`) for publish / subscribe
+- **PubNub REST** for signals (typing) and message actions (reactions + read receipts)
 
 The upstream 0.8.0 subscribe deserializer breaks on signals/message-actions (`"e": 1|3`). See `vendor/pubnub/PATCHES.md`.
 
@@ -13,7 +13,7 @@ Guided by PubNub MCP `write_pubnub_app` (channel naming, message envelopes, secu
 ## Features
 
 - Multiple rooms (`probability-amplifier.room.<slug>`)
-- Message history on join
+- Live messages only (no Presence, no Message Persistence)
 - Typing indicators (signals)
 - Read receipts (message actions `receipt/read`)
 - Reactions (message actions `reaction/<emoji>`)
@@ -49,11 +49,11 @@ OPENAI_API_KEY=sk-...
 | --- | --- |
 | UI | Static HTML/CSS/JS served by Axum |
 | Realtime bridge | WebSocket ↔ PubNub hub |
-| Pub/Sub + presence events | `pubnub` crate |
-| History / signals / actions / App Context | REST helpers in `src/rest.rs` |
+| Pub/Sub | `pubnub` crate |
+| Signals / actions / App Context | REST helpers in `src/rest.rs` |
 | Room catalog | App Context channel metadata (`probability-amplifier.room.*`), synced from BizOps |
 | Analysis | `src/llm.rs` |
 
 ## Notes
 
-Rust SDK currently documents publish/subscribe/presence/access — not full history or message-action writers — so those use REST while still receiving action/signal events on the subscribe stream.
+Rust SDK currently documents publish/subscribe/access — not message-action writers — so those use REST while still receiving action/signal events on the subscribe stream. Publishes set `store: false`. Analyze reads an in-memory transcript of messages this process has seen live, capped at 50.
